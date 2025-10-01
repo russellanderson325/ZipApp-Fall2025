@@ -33,9 +33,10 @@ class _PreviousTripsScreenState extends State<PreviousTripsScreen> {
     DocumentReference userRef =
         _firestore.collection('users').doc(userService.userID);
     pastRideIDs = (await userRef.get()).get('pastRides');
-    if (kDebugMode) {
-      print('past ride ids: $pastRideIDs');
+    if (pastRideIDs == null) {
+      pastRideIDs = [];
     }
+    print('past ride ids: $pastRideIDs');
     return pastRideIDs;
   }
 

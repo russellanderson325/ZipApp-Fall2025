@@ -7,13 +7,31 @@ import 'package:zipapp/ui/screens/ride_details_screen.dart';
 
 class RideActivityItem extends StatefulWidget {
   final String destination;
-  final DateTime dateTime;
+  final DateTime startTime;
+  final DateTime endTime;
   final double price;
+  final String origin;
+  final String id;
+  final double tip;
+  final int rating;
+  final String status;
+  final String? cardUsed;
+  final String? last4;
+  final String? paymentMethod;
   const RideActivityItem(
       {super.key,
       required this.destination,
-      required this.dateTime,
-      required this.price});
+      required this.startTime,
+      required this.endTime,
+      required this.price,
+      required this.origin,
+      required this.id,
+      required this.tip,
+      required this.rating,
+      required this.status,
+      this.cardUsed,
+      this.last4,
+      this.paymentMethod});
   @override
   State<RideActivityItem> createState() => _RideActivityItemState();
 }
@@ -35,7 +53,19 @@ class _RideActivityItemState extends State<RideActivityItem> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => RideDetailsScreen(dateTime: widget.dateTime, price: widget.price),
+                    builder: (context) => RideDetailsScreen(
+                        startTime: widget.startTime,
+                        price: widget.price,
+                        origin: widget.origin,
+                        destination: widget.destination,
+                        endTime: widget.endTime,
+                        id: widget.id,
+                        tip: widget.tip,
+                        rating: widget.rating,
+                        status: widget.status,
+                        cardUsed: widget.cardUsed,
+                        last4: widget.last4,
+                        paymentMethod: widget.paymentMethod),
                   ),
                 );
               },
@@ -52,12 +82,12 @@ class _RideActivityItemState extends State<RideActivityItem> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(widget.destination),
-                      ZipFormats.activityDateFormatter(widget.dateTime)
+                      ZipFormats.activityDateFormatter(widget.endTime)
                     ],
                   ),
                   Row(children: <Widget>[
                     Text(
-                      widget.price.toString(),
+                      "\$${widget.price.toStringAsFixed(2)}",
                       style: ZipDesign.disabledBodyText,
                     ),
                     const SizedBox(width: 16),

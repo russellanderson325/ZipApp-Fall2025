@@ -570,7 +570,7 @@ class MapWidgetSampleState extends State<MapWidget> {
       PolylineRequest polylineRequest = PolylineRequest(
         origin: PointLatLng(markers.first.position.latitude, markers.first.position.longitude),
         destination: PointLatLng(markers.last.position.latitude, markers.last.position.longitude),
-        mode: TravelMode.driving,
+        mode: TravelMode.walking,
       );
 
       PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(

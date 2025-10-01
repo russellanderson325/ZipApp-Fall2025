@@ -21,9 +21,9 @@ class ZipFormats {
 
   static Widget activityDateFormatter(DateTime dateTime) {
     String date = '${ZipFormats.months[dateTime.month]} ${dateTime.day} ';
-    String hour = '${dateTime.hour % 12}';
+    String hour = '${dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12}';
     String suffix = dateTime.hour > 12 ? 'PM' : 'AM';
-    String minute = '${dateTime.minute}';
+    String minute = dateTime.minute.toString().padLeft(2, '0');
     String time = ' $hour:$minute $suffix';
     return Row(children: <Widget>[
       Text(date, style: ZipDesign.disabledBodyText),
@@ -35,9 +35,9 @@ class ZipFormats {
   static Widget activityDetailsDatePriceFormatter(
       DateTime dateTime, double price) {
     String date = '${ZipFormats.months[dateTime.month]} ${dateTime.day}';
-    String hour = '${dateTime.hour % 12}';
+    String hour = '${dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12}';
     String suffix = dateTime.hour > 12 ? 'PM' : 'AM';
-    String minute = '${dateTime.minute}';
+    String minute = dateTime.minute.toString().padLeft(2, '0');
     String time = '$hour:$minute $suffix';
     String formattedPrice = '  \$${price.toString()}';
     return Row(children: <Widget>[
@@ -48,9 +48,9 @@ class ZipFormats {
   }
 
   static Widget activityDetailsTimeFormatter(DateTime dateTime) {
-    String hour = '${dateTime.hour % 12}';
+    String hour = '${dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12}';
     String suffix = dateTime.hour > 12 ? 'PM' : 'AM';
-    String minute = '${dateTime.minute}';
+    String minute = dateTime.minute.toString().padLeft(2, '0');
     return Text('$hour:$minute $suffix', style: ZipDesign.tinyLightText);
   }
 }

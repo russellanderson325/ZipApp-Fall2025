@@ -9,10 +9,32 @@ import 'package:zipapp/constants/zip_formats.dart';
 import 'package:zipapp/ui/widgets/rating_drawer.dart';
 
 class RideDetailsScreen extends StatefulWidget {
-  final DateTime dateTime;
+  final String destination;
+  final DateTime startTime;
+  final DateTime endTime;
   final double price;
+  final String origin;
+  final String id;
+  final double tip;
+  final int rating;
+  final String status;
+  final String? cardUsed;
+  final String? last4;
+  final String? paymentMethod;
   const RideDetailsScreen(
-      {super.key, required this.dateTime, required this.price});
+      {super.key,
+      required this.destination,
+      required this.startTime,
+      required this.endTime,
+      required this.price,
+      required this.origin,
+      required this.id,
+      required this.tip,
+      required this.rating,
+      required this.status,
+      this.cardUsed,
+      this.last4,
+      this.paymentMethod});
 
   @override
   State<RideDetailsScreen> createState() => _RideDetailsScreenState();
@@ -86,48 +108,66 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                       ),
                     ),
                     _buildStartLocation(
-                      '250 W. Glenn Ave, Auburn, AL 36830',
-                      DateTime(2024, 10, 12, 14, 35),
+                      widget.origin,
+                      widget.startTime,
                     ),
                     const SizedBox(height: 16),
                     _buildEndLocation(
-                      '251 S. Donahue Dr, Auburn, AL 36849',
-                      DateTime(2024, 10, 12, 14, 49),
+                      widget.destination,
+                      widget.endTime,
                     ),
-                    const Padding(
-                      padding: EdgeInsets.only(top: 32, bottom: 16),
-                      child: Text(
-                        'Tip and Rating',
-                        textAlign: TextAlign.left,
-                        style: ZipDesign.sectionTitleText,
-                      ),
-                    ),
-                    _buildTipOrRatingRow(
+                    widget.status != "CANCELED"
+                        ? const Padding(
+                            padding: EdgeInsets.only(top: 32, bottom: 16),
+                            child: Text(
+                              'Ride Status',
+                              textAlign: TextAlign.left,
+                              style: ZipDesign.sectionTitleText,
+                            ),
+                          )
+                        : const Padding(
+                            padding: EdgeInsets.only(top: 32, bottom: 16),
+                            child: Text(
+                              'This Ride was Canceled.',
+                              textAlign: TextAlign.left,
+                              style: ZipDesign.sectionTitleText,
+                            ),
+                          ),
+                    _buildTipRow(
                       LucideIcons.coins,
-                      tip,
+                      widget.tip,
                       'Add tip',
+                      widget.status,
                     ),
                     const SizedBox(height: 16),
-                    _buildTipOrRatingRow(
+                    _buildRatingRow(
                       LucideIcons.star,
-                      rating,
+                      widget.rating,
                       'Rate',
+                      widget.status,
                     ),
-                    const Padding(
-                      padding: EdgeInsets.only(top: 32, bottom: 16),
-                      child: Text(
-                        'Payment',
-                        textAlign: TextAlign.left,
-                        style: ZipDesign.sectionTitleText,
-                      ),
-                    ),
-                    _buildPaymentRow(LucideIcons.creditCard,
-                        'Mastercard ••••1234', widget.price),
+                    widget.status != "CANCELED"
+                        ? const Padding(
+                            padding: EdgeInsets.only(top: 32, bottom: 16),
+                            child: Text(
+                              'Payment',
+                              textAlign: TextAlign.left,
+                              style: ZipDesign.sectionTitleText,
+                            ),
+                          )
+                        : const SizedBox(),
+                    _buildPaymentRow(
+                        LucideIcons.creditCard,
+                        widget.cardUsed,
+                        widget.last4,
+                        widget.price,
+                        widget.paymentMethod,
+                        widget.status),
                   ],
                 ),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(bottom: 16),
-                  child: Text('Trip ID: a2sg6h-24c7hjfd-565fgng-8jge34323',
+                  child: Text('Trip ID: ${widget.id}',
                       style: ZipDesign.tinyLightText),
                 ),
               ],
@@ -185,7 +225,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
               style: ZipDesign.sectionTitleText,
             ),
             ZipFormats.activityDetailsDatePriceFormatter(
-                widget.dateTime, widget.price),
+                widget.endTime, widget.price),
           ],
         ),
         Container(
@@ -242,7 +282,11 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
     );
   }
 
-  Widget _buildTipOrRatingRow(IconData icon, String title, String buttonTitle) {
+  Widget _buildTipRow(
+      IconData icon, double tip, String buttonTitle, String status) {
+    if (status == "CANCELED" || status == "IN_PROGRESS") {
+      return const Row();
+    }
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -250,7 +294,56 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
           Icon(icon, size: 16, color: Colors.black),
           const SizedBox(width: 16),
           Text(
-            title,
+            status != "CANCELED" || status != "IN_PROGRESS"
+                ? tip.toString()
+                : '0',
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
+          ),
+        ]),
+        SizedBox(
+          height: 23,
+          width: 64,
+          child: TextButton(
+            onPressed: showDrawer,
+            style: ButtonStyle(
+              fixedSize: MaterialStateProperty.all(const Size(64, 23)),
+              padding: MaterialStateProperty.all(const EdgeInsets.all(0)),
+              shape: MaterialStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              backgroundColor:
+                  MaterialStateProperty.all(TailwindColors.gray200),
+            ),
+            child: Text(
+              buttonTitle,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Lexend',
+                color: Colors.black,
+              ),
+            ),
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget _buildRatingRow(
+      IconData icon, int value, String buttonTitle, String status) {
+    if (status == "CANCELED" || status == "IN_PROGRESS") {
+      return const Row();
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(children: <Widget>[
+          Icon(icon, size: 16, color: Colors.black),
+          const SizedBox(width: 16),
+          Text(
+            value.toString(),
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
           ),
         ]),
@@ -289,9 +382,9 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
   Future<void> _getRideTip() async {
     try {
       var ratingCollection = _firestore.collection('ratings');
-      var userDoc = await ratingCollection.doc(userService.user.uid).get();
-      if (userDoc.exists && userDoc.data() != null) {
-        Map<String, dynamic> data = userDoc.data() as Map<String, dynamic>;
+      var rideTip = await ratingCollection.doc(widget.id).get();
+      if (rideTip.exists && rideTip.data() != null) {
+        Map<String, dynamic> data = rideTip.data() as Map<String, dynamic>;
         if (data.containsKey('tip')) {
           setState(() {
             tip = data['tip'].toDouble();
@@ -344,15 +437,34 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
         curve: Curves.easeInOut);
   }
 
-  Widget _buildPaymentRow(IconData icon, String cardName, double price) {
+  Widget _buildPaymentRow(IconData icon, String? cardName, String? last4,
+      double price, String? paymentMethod, String status) {
+    print(paymentMethod);
+    if (status == "CANCELED" || status == "IN_PROGRESS") {
+      return const Row();
+    }
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: <Widget>[
         Row(
           children: <Widget>[
-            Icon(icon),
+            paymentMethod != null
+                ? (paymentMethod == 'apple_pay'
+                    ? Image.asset('assets/apple_pay_icon.png',
+                        width: 50, height: 30)
+                    : const Icon(LucideIcons.creditCard,
+                        size: 16, color: Colors.black))
+                : const Icon(LucideIcons.creditCard,
+                    size: 16, color: Colors.black),
             const SizedBox(width: 16),
-            Text(cardName, style: ZipDesign.bodyText),
+            Text(
+                cardName ??
+                    (paymentMethod == 'apple_pay'
+                        ? "Apple Pay"
+                        : paymentMethod == "google_pay"
+                            ? "Google Pay"
+                            : "Unknown Method"),
+                style: ZipDesign.bodyText),
           ],
         ),
         Text(

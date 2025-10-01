@@ -38,6 +38,7 @@ dependencies:
   url_launcher: ^6.3.1
   webview_flutter: ^4.4.4
   dotted_border: ^2.1.0
+  geocoding: ^4.0.0
 
 dev_dependencies:
   flutter_test:
