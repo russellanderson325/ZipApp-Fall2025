@@ -20,6 +20,8 @@ import 'package:zipapp/ui/screens/rider_only/vehicle_ride_status_confirmation_sc
 import 'package:zipapp/ui/screens/rider_only/vehicles_screen.dart';
 import 'package:zipapp/ui/widgets/message_overlay.dart';
 
+import 'package:geolocator/geolocator.dart';
+
 class MapWidget extends StatefulWidget {
   final bool driver;
   const MapWidget({super.key, required this.driver});
@@ -168,19 +170,15 @@ class MapWidgetSampleState extends State<MapWidget> {
         driverStates['isLoadingDriverStatus'] = true;
       });
     }
-
     // Clock in the driver
     Map<String, dynamic> response = await driverService.clockIn();
-
     // If the response is not successful, show an error message and return
     if (!response['success']) {
       if (mounted) MessageOverlay.angryMessage(context, response['response']);
       return;
     }
-
     // Start driving
     driverService.startDriving();
-
     // Update the UI
     if (mounted) {
       setState(() {
@@ -204,13 +202,11 @@ class MapWidgetSampleState extends State<MapWidget> {
         driverStates['isLoadingDriverStatus'] = true;
       });
     }
-
     var response = await driverService.clockOut();
     if (!response['success']) {
       if (mounted) MessageOverlay.angryMessage(context, response['response']);
       return;
     }
-
     driverService.stopDriving();
     if (mounted) {
       setState(() {
@@ -234,13 +230,11 @@ class MapWidgetSampleState extends State<MapWidget> {
         driverStates['isLoadingDriverStatus'] = true;
       });
     }
-
     var response = await driverService.startBreak();
     if (!response['success']) {
       if (mounted) MessageOverlay.angryMessage(context, response['response']);
       return;
     }
-
     driverService.stopDriving();
     if (mounted) {
       setState(() {
@@ -472,6 +466,40 @@ class MapWidgetSampleState extends State<MapWidget> {
             value.result != null &&
             value.result!.geometry != null &&
             value.result!.geometry!.location != null) {
+          // Get the destination coordinates
+          double destLat = value.result!.geometry!.location!.lat!;
+          double destLng = value.result!.geometry!.location!.lng!;
+          LatLng destination = LatLng(destLat, destLng);
+
+          // Check if destination is within driver radius
+          if (userLatLng != null &&
+              !isWithinDriverRadius(destination, radiusMiles: 3.0)) {
+            // Show error dialog for location too far away
+            if (mounted) {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    backgroundColor: const Color(0xFFFEFCE8),
+                    title: const Text('Location Too Far'),
+                    content: const Text(
+                        'Sorry, the selected destination is outside our service area. Please choose a location within 3 miles of Jordan-Hare Stadium.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text(
+                          'OK',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+            }
+            return; // Exit early, don't add the marker
+          }
+
           if (mounted) {
             setState(() {
               searchLatLng = LatLng(value.result!.geometry!.location!.lat!,
@@ -479,13 +507,13 @@ class MapWidgetSampleState extends State<MapWidget> {
             });
             PolylineResult result = await _addSearchResult(searchResult);
             _moveCamera(
-              latlng: LatLng(value.result!.geometry!.location!.lat! - 0.0015, value.result!.geometry!.location!.lng!)
-            );
+                latlng: LatLng(value.result!.geometry!.location!.lat! - 0.0015,
+                    value.result!.geometry!.location!.lng!));
             if (result.totalDistanceValue != null) {
               // Show the vehicle request screen only if the distance value is not null
               VehiclesScreenState.showVehiclesScreen(
-                context, 
-                result.totalDistanceValue!.toDouble(), 
+                context,
+                result.totalDistanceValue!.toDouble(),
                 value.result!.geometry!.location!.lat!,
                 value.result!.geometry!.location!.lng!,
                 _resetMarkers,
@@ -568,9 +596,11 @@ class MapWidgetSampleState extends State<MapWidget> {
   Future<PolylineResult> _updatePolylines() async {
     if (markers.length > 1) {
       PolylineRequest polylineRequest = PolylineRequest(
-        origin: PointLatLng(markers.first.position.latitude, markers.first.position.longitude),
-        destination: PointLatLng(markers.last.position.latitude, markers.last.position.longitude),
-        mode: TravelMode.walking,
+        origin: PointLatLng(
+            markers.first.position.latitude, markers.first.position.longitude),
+        destination: PointLatLng(
+            markers.last.position.latitude, markers.last.position.longitude),
+        mode: TravelMode.driving,
       );
 
       PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
@@ -608,4 +638,22 @@ class MapWidgetSampleState extends State<MapWidget> {
       return PolylineResult();
     }
   }
+}
+
+bool isWithinDriverRadius(LatLng? destination, {double radiusMiles = 3.0}) {
+  // Geofence center: Jordan-Hare Stadium
+  const double geofenceLat = 32.6025;
+  const double geofenceLng = -85.4890;
+
+  if (destination == null) return false;
+
+  const double milesToMeters = 1609.34;
+  double distanceMeters = Geolocator.distanceBetween(
+    geofenceLat,
+    geofenceLng,
+    destination.latitude,
+    destination.longitude,
+  );
+
+  return distanceMeters <= (radiusMiles * milesToMeters);
 }
