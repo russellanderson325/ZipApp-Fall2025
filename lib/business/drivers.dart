@@ -5,7 +5,6 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:flutter/foundation.dart';
 import 'package:geoflutterfire2/geoflutterfire2.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:zipapp/business/location.dart';
@@ -209,6 +208,13 @@ class DriverService {
     var geoPoint = locationService.getCurrentGeoFirePoint();
     print('DRIVER: Current location: ${geoPoint.latitude}, ${geoPoint.longitude}');
     
+    // Cancel existing request subscription to reset it
+    if (requestSub != null) {
+      print('DRIVER: Cancelling old request listener');
+      await requestSub?.cancel();
+      requestSub = null;
+    }
+    
     // Clean up any stale requests before starting
     print('DRIVER: Cleaning up old requests...');
     try {
@@ -223,9 +229,6 @@ class DriverService {
       print('DRIVER: Error cleaning requests: $e');
     }
     
-    // Reset request counter
-    requestLength = 0;
-    
     await driverReference.update({
       'lastActivity': DateTime.now(),
       'geoFirePoint': geoPoint.data,
@@ -235,7 +238,7 @@ class DriverService {
     print('DRIVER: Updated Firestore document');
     print('DRIVER: Initializing request listener...');
     
-    // if (_isRequestSubListening) return;
+    // Initialize fresh request listener
     initRequestSub();
     await Future.delayed(const Duration(milliseconds: 1000));
     
@@ -252,6 +255,9 @@ class DriverService {
     String requestPath = 'drivers/${userService.userID}/requests';
     print('DRIVER: Starting request listener at: $requestPath');
     
+    // Track which request IDs we've already processed
+    Set<String> processedRequestIds = {};
+    
     requestStream = requestCollection
         .snapshots()
         .map((event) {
@@ -263,22 +269,26 @@ class DriverService {
     requestSub = requestStream.listen((List<Request> requests) {
       print('DRIVER: Request listener triggered - ${requests.length} requests');
       
-      if (requestLength < requests.length) {
-        requestLength = requests.length;
-        // Handle the first request
-        Request firstRequest = requests.last;
-        print('DRIVER: NEW REQUEST RECEIVED!');
-        print('  - From: ${firstRequest.name}');
-        print('  - Request ID: ${firstRequest.id}');
-        print('  - Price: ${firstRequest.price}');
-        print('  - Model: ${firstRequest.model}');
-        _onRequestRecieved(firstRequest);
-      } else if (requestLength > requests.length) {
-        requestLength = requests.length;
-        print('DRIVER: Request count decreased to $requestLength');
-      } else {
-        // Do nothing
+      // Process any new requests we haven't seen before
+      for (Request request in requests) {
+        if (!processedRequestIds.contains(request.id)) {
+          print('DRIVER: NEW REQUEST RECEIVED!');
+          print('  - From: ${request.name}');
+          print('  - Request ID: ${request.id}');
+          print('  - Price: ${request.price}');
+          print('  - Model: ${request.model}');
+          
+          processedRequestIds.add(request.id);
+          _onRequestRecieved(request);
+        }
       }
+      
+      // Clean up processed IDs for requests that no longer exist
+      processedRequestIds.removeWhere((id) => 
+        !requests.any((req) => req.id == id)
+      );
+      
+      print('DRIVER: Currently tracking ${processedRequestIds.length} processed requests');
     });
     
     print('DRIVER: Request listener successfully initialized');
@@ -291,19 +301,8 @@ class DriverService {
    * @return void
    */
   void _onRequestRecieved(Request req) {
-    // REMOVED AUTOMATIC ACCEPTANCE FOR PRODUCTION
-    // if (kDebugMode) {
-    //   acceptRequest(req.id); // REMOVED - was for testing only
-    // }
-    
     print('DRIVER: Processing request ${req.id}');
     currentRequest = req;
-    
-    // AUTO-ACCEPT FOR TESTING
-    if (kDebugMode) {
-      print('DRIVER: DEBUG MODE - Auto-accepting request');
-      acceptRequest(req.id);
-    }
     
     // Notify UI that a request has been received
     if (onRequestReceived != null) {
