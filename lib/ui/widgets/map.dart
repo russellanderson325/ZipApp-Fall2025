@@ -58,6 +58,11 @@ class MapWidgetSampleState extends State<MapWidget> {
   @override
   void initState() {
     super.initState();
+
+    // Initialize with Auburn coordinates immediately to ensure map loads
+    userLatLng = const LatLng(32.6099, -85.4808);
+    print('Initial position set to Auburn: $userLatLng');
+
     DefaultAssetBundle.of(context)
         .loadString('assets/mapthemes/uber_theme.json')
         .then((value) {
@@ -67,33 +72,84 @@ class MapWidgetSampleState extends State<MapWidget> {
     // Listen to user.isRiding changes
     userService.userStream.listen(updateUI);
 
-    if (mounted) {
-      positionService.getPosition().then((value) {
-        if (mounted) {
-          setState(() {
-            userLatLng = LatLng(value.latitude, value.longitude);
-            // if (userService.isRiding()) {
-            //   markers.add(Marker(
-            //     markerId: const MarkerId("userPosition"),
-            //     position: userLatLng!,
-            //     infoWindow: const InfoWindow(title: "You are here"),
-            //   ));
-            // }
-          });
-        }
-        // Update the driver status
-        updateDriverStatus().then((value) async {
-          if (userService.user.isRiding) {
-            Map<String, dynamic>? destinationAddress = await rideService
-                .fetchRideDestination(userService.user.currentRideId);
-            GeoPoint destinationGeoPoint = destinationAddress?['geopoint'];
+    // Start location fetching immediately
+    _getCurrentLocationAndCenter();
+  }
 
-            double lat = destinationGeoPoint.latitude;
-            double lng = destinationGeoPoint.longitude;
-            addSearchedMarkerByCoordinate(lat, lng);
-          }
+  void _getCurrentLocationAndCenter() async {
+    try {
+      // Check location permissions first
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          print('Location permissions are denied');
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        print('Location permissions are permanently denied');
+        return;
+      }
+
+      // Get last known position first (faster)
+      Position? lastKnown = await Geolocator.getLastKnownPosition();
+      if (lastKnown != null && mounted) {
+        setState(() {
+          userLatLng = LatLng(lastKnown.latitude, lastKnown.longitude);
+          print('Using last known position: $userLatLng');
         });
+        _centerMapOnUser();
+      }
+
+      // Then get current position for accuracy
+      Position currentPosition = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
+
+      if (mounted) {
+        setState(() {
+          userLatLng =
+              LatLng(currentPosition.latitude, currentPosition.longitude);
+          print('Updated to current position: $userLatLng');
+        });
+        _centerMapOnUser();
+      }
+
+      // Update the driver status after getting location
+      updateDriverStatus().then((value) async {
+        if (userService.user.isRiding) {
+          Map<String, dynamic>? destinationAddress = await rideService
+              .fetchRideDestination(userService.user.currentRideId);
+          GeoPoint destinationGeoPoint = destinationAddress?['geopoint'];
+
+          double lat = destinationGeoPoint.latitude;
+          double lng = destinationGeoPoint.longitude;
+          addSearchedMarkerByCoordinate(lat, lng);
+        }
       });
+    } catch (error) {
+      print('ERROR getting position: $error');
+      // Keep Auburn coordinates as fallback - map is already loaded
+    }
+  }
+
+  void _centerMapOnUser() async {
+    if (!mounted || userLatLng == null) return;
+
+    // Wait for map controller to be ready
+    if (_controller.isCompleted) {
+      try {
+        final GoogleMapController controller = await _controller.future;
+        await controller.animateCamera(CameraUpdate.newCameraPosition(
+          CameraPosition(target: userLatLng!, zoom: 17.5),
+        ));
+        print('Camera centered on user location: $userLatLng');
+      } catch (e) {
+        print('Error centering map: $e');
+      }
     }
   }
 
@@ -147,8 +203,12 @@ class MapWidgetSampleState extends State<MapWidget> {
             markers: markers.toSet(),
             myLocationButtonEnabled: false,
             onMapCreated: (GoogleMapController controller) {
-              if (!_controller.isCompleted) _controller.complete(controller);
-              controller.setMapStyle(mapTheme);
+              if (!_controller.isCompleted) {
+                _controller.complete(controller);
+                controller.setMapStyle(mapTheme);
+                // Center on user location as soon as map is created
+                _centerMapOnUser();
+              }
             },
             polylines: polylines.toSet(),
             zoomControlsEnabled: false,
@@ -577,11 +637,11 @@ class MapWidgetSampleState extends State<MapWidget> {
     return await _updatePolylines();
   }
 
-  void _moveCamera({latlng, zoom = 17}) async {
+  void _moveCamera({LatLng? latlng, double zoom = 17.0}) async {
     latlng ??= userLatLng!;
     final GoogleMapController controller = await _controller.future;
     await controller.animateCamera(CameraUpdate.newCameraPosition(
-        CameraPosition(target: latlng, zoom: zoom.toDouble())));
+        CameraPosition(target: latlng, zoom: zoom)));
   }
 
   void _resetMarkers() {

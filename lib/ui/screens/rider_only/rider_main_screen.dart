@@ -22,14 +22,24 @@ class _RiderMainScreenState extends State<RiderMainScreen> {
     super.initState();
   }
 
+  // Lazy load the current page based on selected index
+  Widget _getCurrentPage() {
+    switch (_selectedIndex) {
+      case 0:
+        return const RiderHomeScreen();
+      case 1:
+        return const ActivityScreen();
+      case 2:
+        return const PaymentsScreen();
+      case 3:
+        return const AccountScreen(driver: false);
+      default:
+        return const RiderHomeScreen();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final List<Widget> pages = <Widget>[
-      const RiderHomeScreen(),
-      const ActivityScreen(),
-      const PaymentsScreen(),
-      const AccountScreen(driver: false),
-    ];
     const List<BottomNavigationBarItem> items = [
       BottomNavigationBarItem(
           icon: Icon(Icons.map),
@@ -51,7 +61,7 @@ class _RiderMainScreenState extends State<RiderMainScreen> {
 
     return Scaffold(
         body: Center(
-          child: pages.elementAt(_selectedIndex),
+          child: _getCurrentPage(), // Now uses lazy loading
         ),
         bottomNavigationBar: Container(
             decoration: const BoxDecoration(
