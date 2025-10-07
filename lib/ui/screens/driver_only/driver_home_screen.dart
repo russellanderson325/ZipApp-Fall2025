@@ -5,6 +5,8 @@ import 'package:zipapp/models/request.dart';
 import 'package:zipapp/ui/widgets/driverRequestPopUp.dart';
 import 'package:zipapp/ui/widgets/map.dart' as mapwidget;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:zipapp/constants/zip_design.dart';
+import 'package:zipapp/constants/zip_colors.dart';
 
 class DriverHomeScreen extends StatefulWidget {
   const DriverHomeScreen({super.key});
@@ -42,8 +44,11 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
     Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Ride request timed out'),
-        backgroundColor: Colors.orange,
+        content: Text(
+          'Ride request timed out',
+          style: TextStyle(color: Colors.black),
+        ),
+        backgroundColor: ZipColors.zipYellow,
         duration: Duration(seconds: 2),
       ),
     );
@@ -72,9 +77,6 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
       body: const Center(
         child: mapwidget.MapWidget(driver: true),
       ),
-      
-      // TEST BUTTON - Remove this before production
-
     );
   }
 }

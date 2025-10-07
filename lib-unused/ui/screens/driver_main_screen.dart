@@ -689,7 +689,7 @@ class _DriverMainScreenState extends State<DriverMainScreen> {
 
   // void _overrideDriver() async {
   //   String result = await driverService.overrideClockIn();
-  //   _driverAlert(context, result, false);
+  //   _driverAlert(context, result, false);z
   //   driverService.startDriving();
   // }
 
