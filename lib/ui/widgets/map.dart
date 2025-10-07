@@ -188,6 +188,7 @@ class MapWidgetSampleState extends State<MapWidget> {
     }
   }
 
+// Build the Google Map widget
   Widget buildMap() {
     return userLatLng == null
         ? const Center(
