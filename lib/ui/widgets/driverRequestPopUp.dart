@@ -69,17 +69,17 @@ class _RideRequestPopupState extends State<RideRequestPopup> {
   }
 
   String _formatPrice(dynamic price) {
-    if (price is String) {
-      final parsedPrice = double.tryParse(price);
-      if (parsedPrice != null) {
-        return parsedPrice.toStringAsFixed(2);
-      }
-      return price;
-    } else if (price is num) {
-      return price.toStringAsFixed(2);
+  if (price is String) {
+    final parsedPrice = double.tryParse(price);
+    if (parsedPrice != null) {
+      return '\$${parsedPrice.toStringAsFixed(2)}';  // Added $ symbol
     }
-    return '0.00';
+    return price;
+  } else if (price is num) {
+    return '\$${price.toStringAsFixed(2)}';  // Added $ symbol
   }
+  return '\$0.00';
+}
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +151,7 @@ class _RideRequestPopupState extends State<RideRequestPopup> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
-                  '\$${_formatPrice(widget.request.price)}',
+                  _formatPrice(widget.request.price),
                   style: ZipDesign.pageTitleText.copyWith(
                     fontSize: 48,
                     fontWeight: FontWeight.w600,
@@ -160,25 +160,6 @@ class _RideRequestPopupState extends State<RideRequestPopup> {
               ),
               
               const SizedBox(height: 8),
-              
-              // Rating placeholder
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: [
-                    const Icon(Icons.star, size: 18, color: Colors.black),
-                    const SizedBox(width: 4),
-                    Text(
-                      '4.85',
-                      style: ZipDesign.bodyText.copyWith(
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              
-              const SizedBox(height: 20),
               
               // Trip details
               Padding(
@@ -205,7 +186,7 @@ class _RideRequestPopupState extends State<RideRequestPopup> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '5 mins (1.2 mi) away',
+                                'null',
                                 style: ZipDesign.bodyText.copyWith(
                                   fontSize: 14,
                                   color: Colors.grey[700],
@@ -245,7 +226,7 @@ class _RideRequestPopupState extends State<RideRequestPopup> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '4 mins (1.4 mi) trip',
+                                'null',
                                 style: ZipDesign.bodyText.copyWith(
                                   fontSize: 14,
                                   color: Colors.grey[700],
