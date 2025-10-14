@@ -2,6 +2,10 @@ include: package:flutter_lints/flutter.yaml
 
 #code analysis tool to help identify issues and enforce coding styles
 
+analyzer:
+  exclude:
+    - lib-unused/**
+    
 linter:
   rules:
     - avoid_print
