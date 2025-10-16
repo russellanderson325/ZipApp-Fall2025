@@ -36,6 +36,8 @@ class AuthenticationDrawerWidgets {
         }
       },
       decoration: const InputDecoration(
+        filled: true,
+        fillColor: Color(0xFFFEFDF4), // Added yellow background
         contentPadding: EdgeInsets.only(left: 14, right: 14),
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.all(Radius.circular(8)),
@@ -99,6 +101,8 @@ class AuthenticationDrawerWidgets {
     return TextField(
       maxLines: 5,
       decoration: InputDecoration(
+        filled: true,
+        fillColor: const Color(0xFFFEFCE8), // Added yellow background
         hintText: hintText,
         hintStyle: ZipDesign.disabledBodyText.copyWith(fontSize: 14),
         contentPadding: const EdgeInsets.all(16),

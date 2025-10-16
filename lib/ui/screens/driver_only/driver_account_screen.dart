@@ -40,10 +40,10 @@ class _AccountScreenState extends State<DriverAccountScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: ZipColors.primaryBackground,
         appBar: AppBar(
           toolbarHeight: 32.0,
-          backgroundColor: Colors.white,
+          backgroundColor: ZipColors.primaryBackground,
           scrolledUnderElevation: 0,
         ),
         body: Padding(

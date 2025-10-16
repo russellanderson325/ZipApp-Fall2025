@@ -3,6 +3,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:zipapp/business/user.dart';
 import 'package:zipapp/business/validator.dart';
 import 'package:zipapp/constants/zip_design.dart';
+import 'package:zipapp/constants/zip_colors.dart';
 import 'package:zipapp/ui/screens/driver_only/driver_main_screen.dart';
 import 'package:zipapp/ui/widgets/authentication_drawer_widgets.dart';
 import 'package:zipapp/ui/widgets/custom_alert_dialog.dart';
@@ -35,7 +36,9 @@ class _DriverVerificationScreenState extends State<DriverVerificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: ZipColors.primaryBackground,
       appBar: AppBar(
+        backgroundColor: ZipColors.primaryBackground,
         leading: IconButton(
           icon: const Icon(LucideIcons.x),
           onPressed: () => Navigator.pop(context),

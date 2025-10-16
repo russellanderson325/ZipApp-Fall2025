@@ -55,7 +55,9 @@ class _DriverPortalState extends State<DriverPortal> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: ZipColors.primaryBackground,
       appBar: AppBar(
+        backgroundColor: ZipColors.primaryBackground,
         leading: IconButton(
           icon: const Icon(LucideIcons.x),
           onPressed: () => Navigator.pop(context),
@@ -253,24 +255,24 @@ class _DriverPortalState extends State<DriverPortal> {
           LucideIcons.alertTriangle),
       const SizedBox(height: 32.0),
       TextButton(
-  onPressed: () {
-    if (_validatePassword()) {
-      updateDriverPassword(driverPasswordController.text);
-      Navigator.pop(context);
-      Navigator.pop(context);
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const DriverMainScreen(),
-        ),
-      );
-    }
-  },
-  style: validDriverPasswords
-      ? ZipDesign.yellowButtonStyle
-      : ZipDesign.disabledYellowButtonStyle,
-  child: const Text('Login as Driver'),
-),
+        onPressed: () {
+          if (_validatePassword()) {
+            updateDriverPassword(driverPasswordController.text);
+            Navigator.pop(context);
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const DriverMainScreen(),
+              ),
+            );
+          }
+        },
+        style: validDriverPasswords
+            ? ZipDesign.yellowButtonStyle
+            : ZipDesign.disabledYellowButtonStyle,
+        child: const Text('Login as Driver'),
+      ),
       const SizedBox(height: 16.0)
     ]);
   }
