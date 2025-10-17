@@ -91,6 +91,7 @@ class SearchScreenState extends State<SearchScreen> {
                       itemCount: places.length,
                       itemBuilder: (context, index) {
                         return Card(
+                          color: ZipColors.backgroundLighter,
                           child: ListTile(
                             contentPadding:
                                 const EdgeInsets.fromLTRB(16.0, 0.0, 6.0, 0.0),

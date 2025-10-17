@@ -36,9 +36,11 @@ class _DriverVerificationScreenState extends State<DriverVerificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ZipColors.primaryBackground,
+      backgroundColor:
+          ZipColors.primaryBackground, //Changed background to primary yellow
       appBar: AppBar(
-        backgroundColor: ZipColors.primaryBackground,
+        backgroundColor:
+            ZipColors.primaryBackground, //Changed background to primary yellow
         leading: IconButton(
           icon: const Icon(LucideIcons.x),
           onPressed: () => Navigator.pop(context),

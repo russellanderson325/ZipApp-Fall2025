@@ -37,7 +37,7 @@ class AuthenticationDrawerWidgets {
       },
       decoration: const InputDecoration(
         filled: true,
-        fillColor: Color(0xFFFEFDF4), // Added yellow background
+        fillColor: ZipColors.backgroundLighter, // Added light yellow background
         contentPadding: EdgeInsets.only(left: 14, right: 14),
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.all(Radius.circular(8)),
