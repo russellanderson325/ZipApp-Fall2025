@@ -272,7 +272,7 @@ class DriverService {
         print('  - Request ID: ${firstRequest.id}');
         print('  - Price: ${firstRequest.price}');
         print('  - Model: ${firstRequest.model}');
-        _onRequestRecieved(firstRequest);
+        _onRequestReceived(firstRequest);
       } else if (requestLength > requests.length) {
         requestLength = requests.length;
         print('DRIVER: Request count decreased to $requestLength');
@@ -290,20 +290,10 @@ class DriverService {
    * @param req The request that has been received
    * @return void
    */
-  void _onRequestRecieved(Request req) {
-    // REMOVED AUTOMATIC ACCEPTANCE FOR PRODUCTION
-    // if (kDebugMode) {
-    //   acceptRequest(req.id); // REMOVED - was for testing only
-    // }
-    
+  void _onRequestReceived(Request req) {
+
     print('DRIVER: Processing request ${req.id}');
     currentRequest = req;
-    
-    // AUTO-ACCEPT FOR TESTING
-    if (kDebugMode) {
-      print('DRIVER: DEBUG MODE - Auto-accepting request');
-      acceptRequest(req.id);
-    }
     
     // Notify UI that a request has been received
     if (onRequestReceived != null) {
@@ -317,29 +307,21 @@ class DriverService {
     var seconds = (req.timeout.seconds - Timestamp.now().seconds);
     print('DRIVER: Request will timeout in $seconds seconds');
     
-    Future.delayed(Duration(seconds: seconds)).then((value) {
-      // Notify UI that request timed out
-      print('DRIVER: Request ${req.id} timed out');
+    if (seconds > 0) {
+      Future.delayed(Duration(seconds: seconds)).then((value) {
+        // Notify UI that request timed out
+        print('DRIVER: Request ${req.id} timed out');
+        if (onRequestTimeout != null) {
+          onRequestTimeout!(req.id);
+        }
+        declineRequest(req.id);
+      });
+    } else {
+      print('DRIVER: Request ${req.id} already timed out, declining immediately');
       if (onRequestTimeout != null) {
         onRequestTimeout!(req.id);
       }
       declineRequest(req.id);
-    });
-  }
-
-  /*
-   * Decline a request
-   * @param requestID The ID of the request to decline
-   * @return void
-   */
-  Future<void> declineRequest(String requestID) async {
-    DocumentSnapshot requestRef = await requestCollection.doc(requestID).get();
-    if (requestRef.exists) {
-      await _firestore
-          .collection('rides')
-          .doc(requestID)
-          .update({'status': "SEARCHING"});
-      await requestCollection.doc(requestID).delete();
     }
   }
 
@@ -379,6 +361,22 @@ class DriverService {
     print('DRIVER: Request accepted successfully!');
   }
 
+  /*
+   * Decline a request
+   * @param requestID The ID of the request to decline
+   * @return void
+   */
+  Future<void> declineRequest(String requestID) async {
+    DocumentSnapshot requestRef = await requestCollection.doc(requestID).get();
+    if (requestRef.exists) {
+      await _firestore
+          .collection('rides')
+          .doc(requestID)
+          .update({'status': "SEARCHING"});
+      await requestCollection.doc(requestID).delete();
+    }
+  }
+  
   /*
    * Get current pending request for UI display
    * @return Request? The current request or null if none

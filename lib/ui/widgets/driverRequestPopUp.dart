@@ -27,7 +27,7 @@ class _RideRequestPopupState extends State<RideRequestPopup> {
   @override
   void initState() {
     super.initState();
-    _secondsRemaining = 20;
+    _secondsRemaining = 10;
     _startCountdown();
   }
 
