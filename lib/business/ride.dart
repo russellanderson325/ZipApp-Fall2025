@@ -467,8 +467,8 @@ class RideService {
     while (!goToNextDriver && isSearchingForRide) {
       await Future.delayed(const Duration(seconds: 1));
       iterations++;
-      if (iterations >= 70) {
-        print('RIDER: Request timeout after 70 seconds');
+      if (iterations >= 10) {
+        print('RIDER: Request timeout after 10 seconds');
         goToNextDriver = true;
         return Future.value(false);
       }
