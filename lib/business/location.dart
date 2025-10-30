@@ -6,26 +6,19 @@ import 'package:location_permissions/location_permissions.dart';
 
 class LocationService {
   static final LocationService _instance = LocationService._internal();
-  // final Geolocator geolocator = Geolocator();
   GeoFlutterFire geo = GeoFlutterFire();
-  // late GeoLocationStatus geolocationStatus;
-  Position position = Position(
-      longitude: 0,
-      latitude: 0,
-      timestamp: DateTime.now(),
-      accuracy: 0.0,
-      altitude: 0.0,
-      altitudeAccuracy: 0.0,
-      heading: 0.0,
-      headingAccuracy: 0.0,
-      speed: 0.0,
-      speedAccuracy: 0.0);
-  bool initizalized = false;
+  Position? position;
+  bool initialized = false;
   LocationSettings locationOptions = const LocationSettings(
-      accuracy: LocationAccuracy.high, distanceFilter: 25, timeLimit: Duration(seconds: 10));
+      accuracy: LocationAccuracy.high, 
+      distanceFilter: 25, 
+      timeLimit: Duration(seconds: 10));
   Stream<Position> positionStream = const Stream.empty();
-  late StreamSubscription<Position> positionSub;
+  StreamSubscription<Position>? positionSub;
   bool isPositionSubInitialized = false;
+  
+  // ✅ Add a completer to track when initial position is ready
+  Completer<void>? _initCompleter;
 
   factory LocationService() {
     return _instance;
@@ -39,48 +32,266 @@ class LocationService {
 
   Future<bool> setupService({bool reinit = false}) async {
     try {
-      if (isPositionSubInitialized) {
-        await positionSub.cancel();
-        isPositionSubInitialized = false; // Reset the flag
+      if (kDebugMode) {
+        print("LocationService: Starting setup...");
       }
+
+      // Cancel existing subscription if any
+      if (isPositionSubInitialized && positionSub != null) {
+        await positionSub!.cancel();
+        isPositionSubInitialized = false;
+      }
+
+      // Create new completer for this initialization
+      _initCompleter = Completer<void>();
+
+      // Check and request permissions
       PermissionStatus status =
           await LocationPermissions().checkPermissionStatus();
 
-      // Get permission from user
-      while (status != PermissionStatus.granted) {
-        status = await LocationPermissions().requestPermissions();
+      if (kDebugMode) {
+        print("LocationService: Current permission status: $status");
       }
 
-      // Ensure position is not null after setup
-      position = await Geolocator.getCurrentPosition();
+      // Get permission from user
+      while (status != PermissionStatus.granted) {
+        if (kDebugMode) {
+          print("LocationService: Requesting permissions...");
+        }
+        status = await LocationPermissions().requestPermissions();
+        
+        if (status == PermissionStatus.denied || 
+            status == PermissionStatus.restricted) {
+          if (kDebugMode) {
+            print("LocationService: Permission denied by user");
+          }
+          _initCompleter?.completeError(
+            Exception('Location permission denied')
+          );
+          return false;
+        }
+      }
 
-      // Creating the position stream with location options and debouncing (to avoid spamming the database with updates)
-      positionStream = Geolocator.getPositionStream(locationSettings: locationOptions)
+      if (kDebugMode) {
+        print("LocationService: Permissions granted, getting current position...");
+      }
+
+      // ✅ FIX: Get initial position with timeout and fallback
+      try {
+        position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 10),
+        );
+        if (kDebugMode) {
+          print("LocationService: ✓ Got current position: ${position!.latitude}, ${position!.longitude}");
+        }
+      } on TimeoutException catch (e) {
+        if (kDebugMode) {
+          print("LocationService: Timeout getting position, trying last known...");
+        }
+        
+        // Fallback to last known position
+        position = await Geolocator.getLastKnownPosition();
+        
+        if (position == null) {
+          if (kDebugMode) {
+            print("LocationService: No position available");
+          }
+          _initCompleter?.completeError(
+            Exception('Unable to get location: timeout')
+          );
+          return false;
+        }
+        
+        if (kDebugMode) {
+          print("LocationService: ✓ Using last known position: ${position!.latitude}, ${position!.longitude}");
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print("LocationService: Error getting position: $e");
+        }
+        _initCompleter?.completeError(e);
+        return false;
+      }
+
+      // Creating the position stream with location options and debouncing
+      if (kDebugMode) {
+        print("LocationService: Setting up position stream...");
+      }
+
+      positionStream = Geolocator.getPositionStream(
+        locationSettings: locationOptions
+      )
           .transform(debouncePositionStream(const Duration(seconds: 10)))
           .asBroadcastStream();
       
-      positionSub = positionStream.listen((Position position) {
-        this.position = position;
-      });
+      positionSub = positionStream.listen(
+        (Position newPosition) {
+          position = newPosition;
+          if (kDebugMode) {
+            print("LocationService: Position updated: ${newPosition.latitude}, ${newPosition.longitude}");
+          }
+        },
+        onError: (error) {
+          if (kDebugMode) {
+            print("LocationService: Position stream error: $error");
+          }
+        },
+      );
+
+      isPositionSubInitialized = true;
+      initialized = true;
+
+      // ✅ Complete the initialization
+      _initCompleter?.complete();
+
+      if (kDebugMode) {
+        print("LocationService: ✓ Setup complete");
+      }
 
       return true;
     } catch (e) {
       if (kDebugMode) {
-        print("Error initializing LocationService $e");
+        print("LocationService: Error initializing LocationService: $e");
+      }
+      _initCompleter?.completeError(e);
+      initialized = false;
+      return false;
+    }
+  }
+
+  /// ✅ NEW: Ensure service is ready before getting position
+  Future<void> ensureInitialized() async {
+    if (initialized && position != null) {
+      return; // Already initialized
+    }
+
+    if (_initCompleter != null) {
+      // Initialization in progress, wait for it
+      await _initCompleter!.future;
+      return;
+    }
+
+    // Not initialized, do it now
+    bool success = await setupService();
+    if (!success) {
+      throw Exception('Failed to initialize LocationService');
+    }
+  }
+
+  /// ✅ FIXED: Async version that waits for initialization
+  Future<GeoFirePoint> getCurrentGeoFirePointAsync() async {
+    await ensureInitialized();
+    
+    if (position == null) {
+      throw Exception('Position is null after initialization');
+    }
+
+    return geo.point(
+      latitude: position!.latitude, 
+      longitude: position!.longitude
+    );
+  }
+
+  /// ✅ FIXED: Synchronous version with better error handling
+  GeoFirePoint getCurrentGeoFirePoint() {
+    if (!initialized) {
+      throw Exception(
+        'LocationService not initialized. Call setupService() or use getCurrentGeoFirePointAsync() instead.'
+      );
+    }
+
+    if (position == null) {
+      throw Exception(
+        'Position not available. LocationService may still be acquiring location.'
+      );
+    }
+
+    return geo.point(
+      latitude: position!.latitude, 
+      longitude: position!.longitude
+    );
+  }
+
+  /// ✅ NEW: Get current position with refresh
+  Future<Position> getCurrentPosition({bool forceRefresh = false}) async {
+    await ensureInitialized();
+
+    if (forceRefresh || position == null) {
+      try {
+        position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 10),
+        );
+      } on TimeoutException catch (e) {
+        if (kDebugMode) {
+          print("LocationService: Timeout refreshing position");
+        }
+        // Use cached position if available
+        if (position == null) {
+          position = await Geolocator.getLastKnownPosition();
+        }
+      }
+    }
+
+    if (position == null) {
+      throw Exception('Unable to get position');
+    }
+
+    return position!;
+  }
+
+  /// ✅ Check if location is available
+  Future<bool> isLocationAvailable() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (kDebugMode) {
+          print('LocationService: Location services are disabled');
+        }
+        return false;
+      }
+
+      PermissionStatus permission = 
+          await LocationPermissions().checkPermissionStatus();
+      
+      if (kDebugMode) {
+        print('LocationService: Permission status: $permission');
+      }
+      
+      return permission == PermissionStatus.granted;
+    } catch (e) {
+      if (kDebugMode) {
+        print('LocationService: Error checking availability: $e');
       }
       return false;
     }
   }
 
-  GeoFirePoint getCurrentGeoFirePoint() {
-    return geo.point(
-        latitude: position.latitude, longitude: position.longitude);
+  /// ✅ NEW: Get debug status
+  Map<String, dynamic> getStatus() {
+    return {
+      'initialized': initialized,
+      'hasPosition': position != null,
+      'latitude': position?.latitude ?? 'null',
+      'longitude': position?.longitude ?? 'null',
+      'accuracy': position?.accuracy ?? 'null',
+      'timestamp': position?.timestamp.toString() ?? 'null',
+    };
+  }
+
+  /// Clean up resources
+  Future<void> dispose() async {
+    if (isPositionSubInitialized && positionSub != null) {
+      await positionSub!.cancel();
+      isPositionSubInitialized = false;
+    }
+    initialized = false;
+    position = null;
   }
 }
 
 // Debounce the position stream to avoid spamming the database with updates
-// Basically just projecting the position stream to a new stream that only emits a 
-// new position if the last position was emitted more than the interval ago
 StreamTransformer<Position, Position> debouncePositionStream(Duration interval) {
   DateTime? lastTime;
 
