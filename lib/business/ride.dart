@@ -276,7 +276,22 @@ class RideService {
             return distanceA.compareTo(distanceB);
           });
           
-          print('RIDER: Sorted ${nearbyDrivers.length} drivers by distance');
+          print('RIDER: ========================================');
+          print('RIDER: Sorted ${nearbyDrivers.length} drivers by distance:');
+          for (int i = 0; i < nearbyDrivers.length; i++) {
+            Driver d = nearbyDrivers[i];
+            double dist = _calculateDistance(
+              riderPosition.latitude,
+              riderPosition.longitude,
+              d.geoFirePoint!.latitude,
+              d.geoFirePoint!.longitude,
+            );
+            print('  #${i + 1}: ${d.firstName} ${d.lastName} - ${dist.toStringAsFixed(3)} miles');
+          }
+          print('RIDER: ========================================');
+          
+          // ✅ Set status to WAITING before trying drivers
+          await rideReference.update({'status': 'WAITING'});
           
           // ✅ Try each driver until one accepts
           bool foundDriver = false;
@@ -291,25 +306,30 @@ class RideService {
               driver.geoFirePoint!.longitude,
             );
             
+            print('RIDER: ========================================');
             print('RIDER: Sending request to driver ${i + 1}/${nearbyDrivers.length}');
             print('  - Name: ${driver.firstName} ${driver.lastName}');
             print('  - UID: ${driver.uid}');
             print('  - Model: ${driver.cartModel}');
             print('  - Distance: ${driverDistance.toStringAsFixed(2)} miles');
+            print('  - Rank: #${i + 1} (closest first)');
+            print('RIDER: ========================================');
             
-            await rideReference.update({'status': 'WAITING'});
             bool driverAccepted =
                 await _sendRequestToDriver(driver, model, paymentPrice);
             
             if (driverAccepted) {
-              print('RIDER: ✓ Driver accepted the ride!');
+              print('RIDER: ✓✓✓ DRIVER ACCEPTED! ✓✓✓');
+              print('  - Accepted driver: ${driver.firstName} ${driver.lastName}');
+              print('  - Distance: ${driverDistance.toStringAsFixed(2)} miles');
+              print('  - Was ranked: #${i + 1} of ${nearbyDrivers.length}');
               acceptedDriver = driver;
               foundDriver = true;
               isSearchingForRide = false; // ✅ Stop searching
               break; // ✅ Exit the loop
             } else {
-              print('RIDER: Driver did not accept (timeout or declined)');
-              // Continue to next driver
+              print('RIDER: ✗ Driver did not accept (timeout or declined)');
+              print('  - Moving to next driver...');
             }
           }
           
@@ -467,8 +487,8 @@ class RideService {
     while (!goToNextDriver && isSearchingForRide) {
       await Future.delayed(const Duration(seconds: 1));
       iterations++;
-      if (iterations >= 10) {
-        print('RIDER: Request timeout after 10 seconds');
+      if (iterations >= 70) {
+        print('RIDER: Request timeout after 70 seconds');
         goToNextDriver = true;
         return Future.value(false);
       }
