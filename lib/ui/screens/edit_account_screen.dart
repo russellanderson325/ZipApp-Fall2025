@@ -69,6 +69,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: ZipColors.backgroundLighter,
       body: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -85,35 +86,35 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                     child: Text('Edit Account', style: ZipDesign.pageTitleText),
                   ),
                   const SizedBox(height: 32),
-                  adw.promptTextLabel('first name'),
+                  adw.promptTextLabel('First name'),
                   adw.inputTextField(
                       controller: _firstNameController,
                       obscureText: false,
                       validator: () =>
                           Validator.validateName(_firstNameController.text)),
                   const SizedBox(height: 16),
-                  adw.promptTextLabel('last name'),
+                  adw.promptTextLabel('Last name'),
                   adw.inputTextField(
                       controller: _lastNameController,
                       obscureText: false,
                       validator: () =>
                           Validator.validateName(_lastNameController.text)),
                   const SizedBox(height: 16),
-                  adw.promptTextLabel('email'),
+                  adw.promptTextLabel('Email'),
                   adw.inputTextField(
                       controller: _emailController,
                       obscureText: false,
                       validator: () =>
                           Validator.validateEmail(_emailController.text)),
                   const SizedBox(height: 16),
-                  adw.promptTextLabel('phone number'),
+                  adw.promptTextLabel('Phone number'),
                   adw.inputTextField(
                       controller: _phoneController,
                       obscureText: false,
                       validator: () =>
                           Validator.validateNumber(_phoneController.text)),
                   const SizedBox(height: 16),
-                  adw.promptTextLabel('password'),
+                  adw.promptTextLabel('Password'),
                   adw.inputTextField(
                       controller: _passwordController,
                       obscureText: true,
