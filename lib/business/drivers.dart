@@ -15,8 +15,12 @@ import 'package:zipapp/models/request.dart';
 import 'package:zipapp/models/rides.dart';
 import 'package:zipapp/services/payment.dart';
 import 'package:intl/intl.dart';
+import 'package:zipapp/logger.dart';
+
 
 class DriverService {
+  final logger = AppLogger();
+
   static final DriverService _instance = DriverService._internal();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final bool showDebugPrints = true;
@@ -49,6 +53,10 @@ class DriverService {
   late String shiftuid;
   int requestLength = 0;
   bool isDriving = false;
+
+  //  Timer and tracking for auto-decline
+  Timer? _autoDeclineTimer;
+  String? _currentRequestId;
 
   // Add callback for UI to listen to incoming requests
   Function(Request)? onRequestReceived;
@@ -95,19 +103,19 @@ class DriverService {
    * @return Future<bool> True if the driver service was setup successfully, false otherwise
    */
   Future<bool> setupService() async {
-    print('DRIVER: ===== SETTING UP DRIVER SERVICE =====');
+    logger.info('DRIVER: ===== SETTING UP DRIVER SERVICE =====');
     await _updateDriverRecord();
-    
-    print('DRIVER: Setting up document listener');
+
+    logger.info('DRIVER: Setting up document listener');
     driverSub = driverReference
         .snapshots(includeMetadataChanges: true)
         .map((DocumentSnapshot snapshot) {
       Driver driver = Driver.fromDocument(snapshot);
-      print('DRIVER: Document snapshot received');
-      print('  - isWorking: ${driver.isWorking}');
-      print('  - isAvailable: ${driver.isAvailable}');
-      print('  - currentRideID: ${driver.currentRideID}');
-      
+      logger.info('DRIVER: Document snapshot received');
+      logger.info('  - isWorking: ${driver.isWorking}');
+      logger.info('  - isAvailable: ${driver.isAvailable}');
+      logger.info('  - currentRideID: ${driver.currentRideID}');
+
       if (driver.currentRideID.isNotEmpty) {
         setupRideStream(driver.currentRideID);
       }
@@ -116,11 +124,11 @@ class DriverService {
       this.driver = driver;
       handleDriverAvailability(driver);
     });
-    
-    print('DRIVER: Setting up location listener');
+
+    logger.info('DRIVER: Setting up location listener');
     locationSub = locationService.positionStream.listen(_updatePosition);
-    
-    print('DRIVER: ===== DRIVER SERVICE SETUP COMPLETE =====');
+
+    logger.info('DRIVER: ===== DRIVER SERVICE SETUP COMPLETE =====');
     return true;
   }
 
@@ -138,16 +146,16 @@ class DriverService {
   }
 
   void handleDriverAvailability(Driver driver) {
-    print('DRIVER: Checking availability');
-    print('  - isWorking: ${driver.isWorking}');
-    print('  - isAvailable: ${driver.isAvailable}');
-    print('  - isDriving: $isDriving');
-    
+    logger.info('DRIVER: Checking availability');
+    logger.info('  - isWorking: ${driver.isWorking}');
+    logger.info('  - isAvailable: ${driver.isAvailable}');
+    logger.info('  - isDriving: $isDriving');
+
     if (driver.isWorking && driver.isAvailable && !isDriving) {
-      print('DRIVER: Conditions met! Starting to drive...');
+      logger.info('DRIVER: Conditions met! Starting to drive...');
       startDriving();
     } else {
-      print('DRIVER: Not starting - conditions not met');
+      logger.info('DRIVER: Not starting - conditions not met');
     }
   }
 
@@ -178,8 +186,8 @@ class DriverService {
       'isWorking': documentSnapshot.get('isWorking') ?? false,
       'isOnBreak': documentSnapshot.get('isOnBreak') ?? false
     };
-    
-    print('DEBUG Driver States: $driverStates');
+
+    logger.info('DEBUG Driver States: $driverStates');
     return driverStates;
   }
 
@@ -203,14 +211,13 @@ class DriverService {
    * @return void
    */
   void startDriving() async {
-    print('DRIVER: ===== STARTING DRIVING MODE =====');
+    logger.info('DRIVER: ===== STARTING DRIVING MODE =====');
     isDriving = true;
     
     var geoPoint = locationService.getCurrentGeoFirePoint();
-    print('DRIVER: Current location: ${geoPoint.latitude}, ${geoPoint.longitude}');
-    
+    logger.info('DRIVER: Current location: ${geoPoint.latitude}, ${geoPoint.longitude}');
     // Clean up any stale requests before starting
-    print('DRIVER: Cleaning up old requests...');
+    logger.info('DRIVER: Cleaning up old requests...');
     try {
       QuerySnapshot oldRequests = await requestCollection.get();
       int deletedCount = 0;
@@ -218,9 +225,9 @@ class DriverService {
         await doc.reference.delete();
         deletedCount++;
       }
-      print('DRIVER: Cleared $deletedCount old requests');
+      logger.info('DRIVER: Cleared $deletedCount old requests');
     } catch (e) {
-      print('DRIVER: Error cleaning requests: $e');
+      logger.error('DRIVER: Error cleaning requests: $e');
     }
     
     // Reset request counter
@@ -231,112 +238,146 @@ class DriverService {
       'geoFirePoint': geoPoint.data,
       'isAvailable': true,
     });
-    
-    print('DRIVER: Updated Firestore document');
-    print('DRIVER: Initializing request listener...');
-    
+
+    logger.info('DRIVER: Updated Firestore document');
+    logger.info('DRIVER: Initializing request listener...');
+
     // if (_isRequestSubListening) return;
     initRequestSub();
     await Future.delayed(const Duration(milliseconds: 1000));
-    
-    print('DRIVER: ===== DRIVING MODE ACTIVE - LISTENING FOR REQUESTS =====');
+
+    logger.info('DRIVER: ===== DRIVING MODE ACTIVE - LISTENING FOR REQUESTS =====');
   }
 
   void initRequestSub() {
     // If requestSub is not already listening, start listening
     if (requestSub != null) {
-      print('DRIVER: Request listener already active');
+      logger.info('DRIVER: Request listener already active');
       return;
     }
     
     String requestPath = 'drivers/${userService.userID}/requests';
-    print('DRIVER: Starting request listener at: $requestPath');
-    
+    logger.info('DRIVER: Starting request listener at: $requestPath');
+
     requestStream = requestCollection
         .snapshots()
         .map((event) {
-          print('DRIVER: Request snapshot received - ${event.docs.length} documents');
+          logger.info('DRIVER: Request snapshot received - ${event.docs.length} documents');
           return event.docs.map((e) => Request.fromDocument(e)).toList();
         })
         .asBroadcastStream();
         
     requestSub = requestStream.listen((List<Request> requests) {
-      print('DRIVER: Request listener triggered - ${requests.length} requests');
+      logger.info('DRIVER: Request listener triggered - ${requests.length} requests');
       
       if (requestLength < requests.length) {
         requestLength = requests.length;
         // Handle the first request
         Request firstRequest = requests.last;
-        print('DRIVER: NEW REQUEST RECEIVED!');
-        print('  - From: ${firstRequest.name}');
-        print('  - Request ID: ${firstRequest.id}');
-        print('  - Price: ${firstRequest.price}');
-        print('  - Model: ${firstRequest.model}');
+        logger.info('DRIVER: NEW REQUEST RECEIVED!');
+        logger.info('  - From: ${firstRequest.name}');
+        logger.info('  - Request ID: ${firstRequest.id}');
+        logger.info('  - Price: ${firstRequest.price}');
+        logger.info('  - Model: ${firstRequest.model}');
         _onRequestReceived(firstRequest);
       } else if (requestLength > requests.length) {
         requestLength = requests.length;
-        print('DRIVER: Request count decreased to $requestLength');
+        logger.info('DRIVER: Request count decreased to $requestLength');
       } else {
         // Do nothing
       }
     });
-    
-    print('DRIVER: Request listener successfully initialized');
+
+    logger.info('DRIVER: Request listener successfully initialized');
   }
 
   /*
-   * Handle a request that has been received.
-   * Removed automatic acceptance - now requires manual driver action.
+   * Handle a request with cancelable auto-decline timer
    * @param req The request that has been received
    * @return void
    */
   void _onRequestReceived(Request req) {
+    logger.info('DRIVER: ========================================');
+    logger.info('DRIVER: Processing request ${req.id}');
 
-    print('DRIVER: Processing request ${req.id}');
+    // Cancel any existing timer
+    _autoDeclineTimer?.cancel();
+    
     currentRequest = req;
+    _currentRequestId = req.id;
     
     // Notify UI that a request has been received
     if (onRequestReceived != null) {
-      print('DRIVER: Calling UI callback');
+      logger.info('DRIVER: Calling UI callback');
       onRequestReceived!(req);
     } else {
-      print('DRIVER: WARNING - No UI callback set!');
+      logger.info('DRIVER: WARNING - No UI callback set!');
     }
     
-    // Set up timeout to automatically decline if no action taken
+    // Calculate timeout duration
     var seconds = (req.timeout.seconds - Timestamp.now().seconds);
-    print('DRIVER: Request will timeout in $seconds seconds');
-    
+    logger.info('DRIVER: Request will auto-decline in $seconds seconds');
+    logger.info('DRIVER: ========================================');
+
     if (seconds > 0) {
-      Future.delayed(Duration(seconds: seconds)).then((value) {
-        // Notify UI that request timed out
-        print('DRIVER: Request ${req.id} timed out');
-        if (onRequestTimeout != null) {
-          onRequestTimeout!(req.id);
+      // Set up cancelable timer
+      _autoDeclineTimer = Timer(Duration(seconds: seconds), () {
+        logger.info('DRIVER: ========================================');
+        logger.info('DRIVER: Auto-decline timer triggered for request ${req.id}');
+
+        // Check if this request is still current
+        if (_currentRequestId == req.id) {
+          logger.info('DRIVER: Auto-declining request ${req.id}');
+          
+          // Notify UI that request timed out
+          if (onRequestTimeout != null) {
+            onRequestTimeout!(req.id);
+          }
+          
+          // Decline the request
+          declineRequest(req.id);
+          
+          // Clear current request
+          _currentRequestId = null;
+        } else {
+          logger.info('DRIVER: Request ${req.id} already handled, skipping auto-decline');
         }
-        declineRequest(req.id);
+        logger.info('DRIVER: ========================================');
       });
     } else {
-      print('DRIVER: Request ${req.id} already timed out, declining immediately');
+      logger.info('DRIVER: Request ${req.id} already expired, declining immediately');
       if (onRequestTimeout != null) {
         onRequestTimeout!(req.id);
       }
       declineRequest(req.id);
+      _currentRequestId = null;
     }
   }
 
   /*
-   * Accept a request - this should now be called manually from UI
+   * Accept a request - cancels auto-decline timer
    * @param requestID The ID of the request to accept
    * @return void
    */
   Future<void> acceptRequest(String requestID) async {
-    print('DRIVER: Accepting request $requestID');
+    logger.info('DRIVER: ========================================');
+    logger.info('DRIVER: Accepting request $requestID');
+
+    // Cancel auto-decline timer
+    if (_autoDeclineTimer != null && _autoDeclineTimer!.isActive) {
+      _autoDeclineTimer!.cancel();
+      logger.info('DRIVER: ✓ Canceled auto-decline timer');
+    }
+    
+    // Clear current request ID since we're accepting
+    _currentRequestId = null;
+    
     DocumentSnapshot requestRef =
         await _firestore.collection('rides').doc(requestID).get();
     
     if (!requestRef.exists) {
-      print('DRIVER: ERROR - Ride document not found!');
+      logger.info('DRIVER: ERROR - Ride document not found!');
+      logger.info('DRIVER: ========================================');
       return;
     }
     
@@ -346,8 +387,8 @@ class DriverService {
         .snapshots()
         .map((event) => Ride.fromDocument(event));
     rideSub = rideStream.listen(_onRideUpdate);
-    
-    print('DRIVER: Updating driver and ride documents');
+
+    logger.info('DRIVER: Updating driver and ride documents');
     await driverReference
         .update({'isAvailable': false, 'currentRideID': requestID});
     await _firestore.collection('rides').doc(requestID).update({
@@ -357,24 +398,44 @@ class DriverService {
       'driverPhotoURL': userService.user.profilePictureURL
     });
     await requestCollection.doc(requestID).delete();
-    
-    print('DRIVER: Request accepted successfully!');
+
+    logger.info('DRIVER: Request accepted successfully!');
+    logger.info('DRIVER: ========================================');
   }
 
   /*
-   * Decline a request
+   * Decline a request - cancels auto-decline timer
    * @param requestID The ID of the request to decline
    * @return void
    */
   Future<void> declineRequest(String requestID) async {
+    logger.info('DRIVER: ========================================');
+    logger.info('DRIVER: Declining request $requestID');
+
+    // Cancel auto-decline timer if this is manual decline
+    if (_currentRequestId == requestID && _autoDeclineTimer != null && _autoDeclineTimer!.isActive) {
+      _autoDeclineTimer!.cancel();
+      logger.info('DRIVER: ✓ Canceled auto-decline timer (manual decline)');
+    }
+    
+    // Clear current request
+    if (_currentRequestId == requestID) {
+      _currentRequestId = null;
+    }
+    
     DocumentSnapshot requestRef = await requestCollection.doc(requestID).get();
     if (requestRef.exists) {
+      logger.info('DRIVER: Request exists, updating ride status to SEARCHING');
       await _firestore
           .collection('rides')
           .doc(requestID)
           .update({'status': "SEARCHING"});
       await requestCollection.doc(requestID).delete();
+      logger.info('DRIVER: Request declined successfully');
+    } else {
+      logger.info('DRIVER: Request already deleted (may have been auto-declined)');
     }
+    logger.info('DRIVER: ========================================');
   }
   
   /*
@@ -393,23 +454,38 @@ class DriverService {
     return currentRequest != null;
   }
 
+  /*
+   * FIXED: Stop driving - cleanup timers
+   */
   void stopDriving() {
+    logger.info('DRIVER: ========================================');
+    logger.info('DRIVER: Stopping driving mode');
+    
+    // Cancel any active auto-decline timer
+    _autoDeclineTimer?.cancel();
+    _currentRequestId = null;
+    
     isDriving = false;
     driverReference.update({
       'lastActivity': DateTime.now(),
       'currentRideID': '',
       'isAvailable': false,
     });
+    
     // Clear requests from the driver on Firebase
     driverReference.collection('requests').get().then((value) {
-      value.docs.map((element) {
-        element.reference.delete();
-      });
+      for (var doc in value.docs) {
+        doc.reference.delete();
+      }
     });
+    
     // Stop listening for requests
     requestSub?.cancel();
     driverSub?.cancel();
     rideSub?.cancel();
+
+    logger.info('DRIVER: Stopped driving, all timers canceled');
+    logger.info('DRIVER: ========================================');
   }
 
   void completeRide() async {
@@ -488,7 +564,7 @@ class DriverService {
     try {
       if (currentRide.status == updatedRide.status) return;
     } catch (e) {
-      print("Error updating ride status:  Current ride is not initialized.");
+      logger.error("Error updating ride status:  Current ride is not initialized.");
     }
     currentRide = updatedRide;
     _isCurrentRideInitialized = true;
@@ -542,28 +618,28 @@ class DriverService {
   Future<List<Driver>> getNearbyDriversListWithModel(
       double radius, String cartModel) async {
     GeoFirePoint centerPoint = locationService.getCurrentGeoFirePoint();
-    
-    print('SEARCH: Searching for drivers');
-    print('  - Center: ${centerPoint.latitude}, ${centerPoint.longitude}');
-    print('  - Radius: $radius miles');
-    print('  - Model: $cartModel');
-    
+
+    logger.info('SEARCH: Searching for drivers');
+    logger.info('  - Center: ${centerPoint.latitude}, ${centerPoint.longitude}');
+    logger.info('  - Radius: $radius miles');
+    logger.info('  - Model: $cartModel');
+
     Query collectionReference = _firestore
         .collection('drivers')
         .where('isAvailable', isEqualTo: true)
         .where('cartModel', isEqualTo: cartModel);
 
     QuerySnapshot testQuery = await collectionReference.get();
-    print('SEARCH: Found ${testQuery.docs.length} drivers matching filters (before geo)');
-    
+    logger.info('SEARCH: Found ${testQuery.docs.length} drivers matching filters (before geo)');
+
     for (var doc in testQuery.docs) {
       var data = doc.data() as Map<String, dynamic>;
-      print('  - Driver: ${data['firstName']} ${data['lastName']}');
-      print('    isAvailable: ${data['isAvailable']}, cartModel: ${data['cartModel']}');
+      logger.info('  - Driver: ${data['firstName']} ${data['lastName']}');
+      logger.info('    isAvailable: ${data['isAvailable']}, cartModel: ${data['cartModel']}');
       if (data['geoFirePoint'] != null) {
         var geo = data['geoFirePoint'] as Map<String, dynamic>;
         var geopoint = geo['geopoint'] as GeoPoint;
-        print('    Location: ${geopoint.latitude}, ${geopoint.longitude}');
+        logger.info('    Location: ${geopoint.latitude}, ${geopoint.longitude}');
       }
     }
 
@@ -578,19 +654,19 @@ class DriverService {
             event.map((e) => Driver.fromDocument(e)).take(10).toList());
 
     List<Driver> nearbyDrivers = await stream.first;
-    print('SEARCH: After geo filter: ${nearbyDrivers.length} drivers within radius');
-    
+    logger.info('SEARCH: After geo filter: ${nearbyDrivers.length} drivers within radius');
+
     return nearbyDrivers;
   }
 
   _updateDriverRecord() async {
     DocumentSnapshot myDriverRef = await driverReference.get();
-    
-    print('DRIVER: Updating driver record for ${userService.userID}');
-    print('DRIVER: Document exists: ${myDriverRef.exists}');
-    
+
+    logger.info('DRIVER: Updating driver record for ${userService.userID}');
+    logger.info('DRIVER: Document exists: ${myDriverRef.exists}');
+
     if (!myDriverRef.exists) {
-      print('DRIVER: Creating new driver document');
+      logger.info('DRIVER: Creating new driver document');
       await driversCollection.doc(userService.userID).set({
         'uid': userService.userID,
         'firstName': userService.user.firstName,
@@ -606,10 +682,10 @@ class DriverService {
         'fcmToken': '',
         'daysOfWeek': [],
       }, SetOptions(merge: true));
-      print('DRIVER: Driver document created');
+      logger.info('DRIVER: Driver document created');
     } else {
       // Just update location, don't change working status
-      print('DRIVER: Updating existing driver location');
+      logger.info('DRIVER: Updating existing driver location');
       await driversCollection.doc(userService.userID).update({
         'geoFirePoint': locationService.getCurrentGeoFirePoint().data,
         'lastActivity': DateTime.now(),
@@ -619,10 +695,10 @@ class DriverService {
     // Verify current state
     DocumentSnapshot verifyDoc = await driverReference.get();
     Map<String, dynamic> data = verifyDoc.data() as Map<String, dynamic>;
-    print('DRIVER: Current states:');
-    print('  - isAvailable: ${data['isAvailable']}');
-    print('  - isWorking: ${data['isWorking']}');
-    print('  - cartModel: ${data['cartModel']}');
+    logger.info('DRIVER: Current states:');
+    logger.info('  - isAvailable: ${data['isAvailable']}');
+    logger.info('  - isWorking: ${data['isWorking']}');
+    logger.info('  - cartModel: ${data['cartModel']}');
   }
 
   /*

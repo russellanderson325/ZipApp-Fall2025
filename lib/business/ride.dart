@@ -14,8 +14,11 @@ import 'package:zipapp/models/driver.dart';
 import 'package:zipapp/models/request.dart';
 import 'package:zipapp/models/rides.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
+import 'package:zipapp/logger.dart';
 
 class RideService {
+  final logger = AppLogger();
+  
   static final RideService _instance = RideService._internal();
   final bool showDebugPrints = true;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -40,10 +43,6 @@ class RideService {
   // Subscriptions
   late Stream<List<DocumentSnapshot>> nearbyDrivers;
 
-  /*
-   * Singleton constructor for RideService
-   * @return RideService
-   */
   factory RideService() {
     return _instance;
   }
@@ -61,8 +60,7 @@ class RideService {
    * and sets the rideID to the ID of the ride document.
    * @return RideService
    */
-  RideService._internal() {
-    currentRidesReference =
+  RideService._internal() { currentRidesReference =
         _firestore.collection('CurrentRides').doc('currentRides');
     
     // Check if user has an active ride
@@ -70,33 +68,30 @@ class RideService {
       rideID = userService.user.currentRideId;
       rideReference = _firestore.collection('rides').doc(rideID);
       if (showDebugPrints) {
-        print('RideService: Initialized with existing ride ID: $rideID');
+        logger.info('RideService: Initialized with existing ride ID: $rideID');
       }
     } else {
-      // Create a reference but don't log yet - will be set when ride starts
       rideReference = _firestore.collection('rides').doc();
       if (showDebugPrints) {
-        print('RideService: Initialized without active ride');
+        logger.info('RideService: Initialized without active ride');
       }
     }
   }
 
-  /// Initialize a new ride reference (called when starting a new ride)
   void initializeRideWithoutID() async {
     if (showDebugPrints) {
-      print('RideService: Initializing new ride document');
+      logger.info('RideService: Initializing new ride document');
     }
     
-    // Only create new reference if we don't already have a valid ride
     if (rideID == null || rideID!.isEmpty) {
       rideReference = _firestore.collection('rides').doc();
       rideID = rideReference.id;
       if (showDebugPrints) {
-        print('RideService: Created new ride ID: $rideID');
+        logger.info('RideService: Created new ride ID: $rideID');
       }
     } else {
       if (showDebugPrints) {
-        print('RideService: Using existing ride ID: $rideID');
+        logger.info('RideService: Using existing ride ID: $rideID');
       }
     }
     
@@ -109,16 +104,16 @@ class RideService {
       if (snapshot.exists) {
         ride = Ride.fromDocument(snapshot);
         if (showDebugPrints) {
-          print('RideService: Loaded existing ride with status: ${ride?.status}');
+          logger.info('RideService: Loaded existing ride with status: ${ride?.status}');
         }
       } else {
         if (showDebugPrints) {
-          print('RideService: No existing ride document found');
+          logger.info('RideService: No existing ride document found');
         }
       }
     } catch (e) {
       if (showDebugPrints) {
-        print('RideService: Error loading ride: $e');
+        logger.error('RideService: Error loading ride: $e');
       }
     }
     
@@ -129,7 +124,7 @@ class RideService {
   Future<void> ensureInitialized() async {
     if (rideID == null || rideID!.isEmpty) {
       if (showDebugPrints) {
-        print('RideService: Service not initialized, initializing now...');
+        logger.info('RideService: Service not initialized, initializing now...');
       }
       initializeRideWithoutID();
     }
@@ -156,7 +151,7 @@ class RideService {
     });
     
     if (showDebugPrints) {
-      print("Directions updated: $newDirections");
+      logger.info("Directions updated: $newDirections");
     }
   }
 
@@ -200,27 +195,23 @@ class RideService {
     _hasIncrementedCounter = false;
     
     try {
-      print('RIDER: ===== STARTING RIDE REQUEST =====');
-      print('RIDER: Destination: $lat, $long');
-      print('RIDER: Price: \$${paymentPrice.toStringAsFixed(2)}');
-      print('RIDER: Model requested: $model');
+      logger.info('RIDER: ===== STARTING RIDE REQUEST =====');
+      logger.info('RIDER: Destination: $lat, $long');
+      logger.info('RIDER: Price: \$${paymentPrice.toStringAsFixed(2)}');
+      logger.info('RIDER: Model requested: $model');
       
-      // ✅ Ensure service is initialized
       await ensureInitialized();
       
-      // ✅ Check location availability first
       bool locationAvailable = await locationService.isLocationAvailable();
       if (!locationAvailable) {
         throw Exception('Location services not available. Please enable GPS and grant location permissions.');
       }
       
-      // ✅ Get current position before starting ride
-      print('RIDER: Getting current location...');
+      logger.info('RIDER: Getting current location...');
       await locationService.getCurrentPosition();
-      print('RIDER: ✓ Location acquired');
       
       await _initializeRideInFirestore(lat, long, paymentPrice);
-      print('RIDER: Ride initialized in Firestore (ID: $rideID)');
+      logger.info('RIDER: Ride initialized in Firestore (ID: $rideID)');
       
       rideStream = rideReference
           .snapshots()
@@ -231,21 +222,19 @@ class RideService {
       int timesSearched = 0;
       double radius = 1;
       isSearchingForRide = true;
-      goToNextDriver = false;
 
-      print('RIDER: ===== STARTING DRIVER SEARCH =====');
+      logger.info('RIDER: ===== STARTING DRIVER SEARCH =====');
 
       while (isSearchingForRide) {
-        print('RIDER: Search iteration ${timesSearched + 1}');
-        print('RIDER: Searching with radius: $radius miles');
-        
+        logger.info('RIDER: Search iteration ${timesSearched + 1}');
+        logger.info('RIDER: Searching with radius: $radius miles');
+
         List<Driver> nearbyDrivers =
             await driverService.getNearbyDriversListWithModel(radius, model);
-        
-        print('RIDER: Found ${nearbyDrivers.length} nearby drivers');
-        
+
+        logger.info('RIDER: Found ${nearbyDrivers.length} nearby drivers');
+
         if (nearbyDrivers.isNotEmpty && timesSearched < 6) {
-          // ✅ Sort drivers by distance (closest first)
           Position riderPosition = await locationService.getCurrentPosition();
           
           // Filter out drivers without valid location data
@@ -254,13 +243,12 @@ class RideService {
           }).toList();
           
           if (nearbyDrivers.isEmpty) {
-            print('RIDER: No drivers with valid location data');
+            logger.info('RIDER: No drivers with valid location data');
             timesSearched += 1;
             continue;
           }
           
           nearbyDrivers.sort((a, b) {
-            // geoFirePoint is a GeoFirePoint object, not a Map
             double distanceA = _calculateDistance(
               riderPosition.latitude,
               riderPosition.longitude,
@@ -275,9 +263,9 @@ class RideService {
             );
             return distanceA.compareTo(distanceB);
           });
-          
-          print('RIDER: ========================================');
-          print('RIDER: Sorted ${nearbyDrivers.length} drivers by distance:');
+
+          logger.info('RIDER: ========================================');
+          logger.info('RIDER: Sorted ${nearbyDrivers.length} drivers by distance:');
           for (int i = 0; i < nearbyDrivers.length; i++) {
             Driver d = nearbyDrivers[i];
             double dist = _calculateDistance(
@@ -286,17 +274,17 @@ class RideService {
               d.geoFirePoint!.latitude,
               d.geoFirePoint!.longitude,
             );
-            print('  #${i + 1}: ${d.firstName} ${d.lastName} - ${dist.toStringAsFixed(3)} miles');
+            logger.info('  #${i + 1}: ${d.firstName} ${d.lastName} - ${dist.toStringAsFixed(3)} miles');
           }
-          print('RIDER: ========================================');
-          
-          // ✅ Set status to WAITING before trying drivers
+          logger.info('RIDER: ========================================');
+
+          // Set status to WAITING before trying drivers
           await rideReference.update({'status': 'WAITING'});
           
-          // ✅ Try each driver until one accepts
+          // Try each driver until one accepts
           bool foundDriver = false;
           for (int i = 0; i < nearbyDrivers.length && !foundDriver; i++) {
-            if (!isSearchingForRide) break; // Check if search was canceled
+            if (!isSearchingForRide) break;
             
             Driver driver = nearbyDrivers[i];
             double driverDistance = _calculateDistance(
@@ -305,71 +293,72 @@ class RideService {
               driver.geoFirePoint!.latitude,
               driver.geoFirePoint!.longitude,
             );
-            
-            print('RIDER: ========================================');
-            print('RIDER: Sending request to driver ${i + 1}/${nearbyDrivers.length}');
-            print('  - Name: ${driver.firstName} ${driver.lastName}');
-            print('  - UID: ${driver.uid}');
-            print('  - Model: ${driver.cartModel}');
-            print('  - Distance: ${driverDistance.toStringAsFixed(2)} miles');
-            print('  - Rank: #${i + 1} (closest first)');
-            print('RIDER: ========================================');
-            
+
+            logger.info('RIDER: ========================================');
+            logger.info('RIDER: Sending request to driver ${i + 1}/${nearbyDrivers.length}');
+            logger.info('  - Name: ${driver.firstName} ${driver.lastName}');
+            logger.info('  - UID: ${driver.uid}');
+            logger.info('  - Model: ${driver.cartModel}');
+            logger.info('  - Distance: ${driverDistance.toStringAsFixed(2)} miles');
+            logger.info('  - Rank: #${i + 1} (closest first)');
+            logger.info('RIDER: ========================================');
+
             bool driverAccepted =
                 await _sendRequestToDriver(driver, model, paymentPrice);
             
             if (driverAccepted) {
-              print('RIDER: ✓✓✓ DRIVER ACCEPTED! ✓✓✓');
-              print('  - Accepted driver: ${driver.firstName} ${driver.lastName}');
-              print('  - Distance: ${driverDistance.toStringAsFixed(2)} miles');
-              print('  - Was ranked: #${i + 1} of ${nearbyDrivers.length}');
+              logger.info('RIDER:  DRIVER ACCEPTED! ');
+              logger.info('  - Accepted driver: ${driver.firstName} ${driver.lastName}');
+              logger.info('  - Distance: ${driverDistance.toStringAsFixed(2)} miles');
+              logger.info('  - Was ranked: #${i + 1} of ${nearbyDrivers.length}');
               acceptedDriver = driver;
               foundDriver = true;
-              isSearchingForRide = false; // ✅ Stop searching
-              break; // ✅ Exit the loop
+              isSearchingForRide = false;
+              break;
             } else {
-              print('RIDER: ✗ Driver did not accept (timeout or declined)');
-              print('  - Moving to next driver...');
+              logger.info('RIDER: Driver ${i + 1} did not accept');
+              logger.info('  - Continuing to next driver in list...');
             }
           }
           
           if (!foundDriver) {
-            print('RIDER: No drivers accepted in this iteration');
+            logger.info('RIDER: No drivers accepted in this iteration');
           }
           
           timesSearched += 1;
         } else {
-          print('RIDER: No drivers found, expanding search radius');
+          logger.info('RIDER: No drivers found, expanding search radius');
           timesSearched += 1;
           radius += 10;
           if (timesSearched > 5) {
-            print('RIDER: Max search attempts reached, giving up');
+            logger.info('RIDER: Max search attempts reached, giving up');
             isSearchingForRide = false;
           } else {
-            print('RIDER: Waiting 60 seconds before next search...');
+            logger.info('RIDER: Waiting 60 seconds before next search...');
             await Future.delayed(const Duration(seconds: 60));
           }
         }
       }
-      
-      print('RIDER: ===== SEARCH COMPLETE =====');
-      
+
+      logger.info('RIDER: ===== SEARCH COMPLETE =====');
+
       if (ride?.status == "IN_PROGRESS") {
-        print('RIDER: Ride is in progress!');
-      } else {
-        print('RIDER: No driver found, canceling ride');
+        logger.info('RIDER: Ride is in progress!');
+      } else if (!isSearchingForRide && ride?.status != "IN_PROGRESS") {
+        logger.info('RIDER: Search ended - no driver accepted after all attempts');
+        logger.info('RIDER: Canceling ride');
         await rideReference.update({
           'lastActivity': DateTime.now(), 
           'status': "CANCELED"
         });
-        // ✅ Decrement counter when no driver found
+        // Decrement counter when no driver found
         if (_hasIncrementedCounter) {
           await removeCurrentRider();
           _hasIncrementedCounter = false;
         }
       }
     } catch (e) {
-      print('RIDER: Error during ride search: $e');
+      logger.info('RIDER: Error during ride search: $e');
       // Ensure cleanup on error
       if (_hasIncrementedCounter) {
         await removeCurrentRider();
@@ -392,7 +381,7 @@ class RideService {
     try {
       rideSubscription?.cancel();
     } catch (e) {
-      print('Error canceling subscription: $e');
+      logger.info('Error canceling subscription: $e');
     }
     
     try {
@@ -418,7 +407,7 @@ class RideService {
         acceptedDriver = null;
       }
     } catch (e) {
-      print('Error in cancelRide: $e');
+      logger.info('Error in cancelRide: $e');
     }
   }
 
@@ -433,7 +422,7 @@ class RideService {
       rideID = null;
       acceptedDriver = null;
     } catch (e) {
-      print('Error in endRide: $e');
+      logger.info('Error in endRide: $e');
     }
   }
 
@@ -443,9 +432,10 @@ class RideService {
 
   Future<bool> _sendRequestToDriver(
       Driver driver, String model, double paymentPrice) async {
-    print('RIDER: Creating request document for driver ${driver.uid}');
+    logger.info('RIDER: Creating request document for driver ${driver.uid}');
+
+    goToNextDriver = false;
     
-    // ✅ Use async version to get GeoFirePoint
     GeoFirePoint destination = await locationService.getCurrentGeoFirePointAsync();
     GeoFirePoint pickup = await locationService.getCurrentGeoFirePointAsync();
     
@@ -461,9 +451,8 @@ class RideService {
 
     String pAmount = paymentPrice.toString();
     String requestPath = 'drivers/${driver.uid}/requests/$rideID';
-    
-    print('RIDER: Writing to: $requestPath');
 
+    logger.info('RIDER: Writing to: $requestPath');
     await _firestore
         .collection('drivers')
         .doc(driver.uid)
@@ -478,23 +467,29 @@ class RideService {
                 photoURL: userService.user.profilePictureURL,
                 model: model,
                 timeout: Timestamp.fromMillisecondsSinceEpoch(
-                    Timestamp.now().millisecondsSinceEpoch + 60000))
+                    Timestamp.now().millisecondsSinceEpoch + 10000))
             .toJson());
 
-    print('RIDER: Request document created, waiting for response...');
+    logger.info('RIDER: Request document created, waiting for response...');
 
     int iterations = 0;
-    while (!goToNextDriver && isSearchingForRide) {
+    String? statusBeforeWait = ride?.status;
+    
+    while (isSearchingForRide && iterations < 15) {
       await Future.delayed(const Duration(seconds: 1));
       iterations++;
-      if (iterations >= 70) {
-        print('RIDER: Request timeout after 70 seconds');
-        goToNextDriver = true;
-        return Future.value(false);
+      
+      if (ride?.status == "IN_PROGRESS") {
+        logger.info('RIDER: Driver ACCEPTED (status changed to IN_PROGRESS)');
+        return true;
+      } else if (ride?.status == "SEARCHING" && ride?.status != statusBeforeWait) {
+        logger.info('RIDER: Driver DECLINED (status changed to SEARCHING)');
+        return false;
       }
     }
-    goToNextDriver = false;
-    return Future.value(true);
+
+    logger.info('RIDER: Driver TIMEOUT (no response after 15 seconds)');
+    return false;
   }
 
   void _retrievePickupRadius() async {
@@ -506,7 +501,7 @@ class RideService {
 
   /// Calculate distance between two points in miles using Haversine formula
   double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-    const double earthRadiusMiles = 3958.8; // Earth's radius in miles
+    const double earthRadiusMiles = 3958.8;
     
     double dLat = _degreesToRadians(lat2 - lat1);
     double dLon = _degreesToRadians(lon2 - lon1);
@@ -525,13 +520,16 @@ class RideService {
     return degrees * math.pi / 180;
   }
 
-  // This method is attached to the ride stream and run every time the ride document in firestore changes.
-  // Use it to keep the UI state in sync and the local Ride object updated.
   void _onRideUpdate(Ride updatedRide) {
-    print('RIDER: _onRideUpdate called with status: ${updatedRide.status}');
+    logger.info('RIDER: ========================================');
+    logger.info('RIDER: _onRideUpdate called');
+    logger.info('  - New status: ${updatedRide.status}');
+    logger.info('  - Old status: ${ride?.status ?? "null"}');
+    logger.info('  - isSearchingForRide: $isSearchingForRide');
+    logger.info('RIDER: ========================================');
     
     if (updatedRide.uid != userService.userID) {
-      print('RIDER: Ride UID mismatch, ignoring update');
+      logger.info('RIDER: Ride UID mismatch, ignoring update');
       return;
     }
     
@@ -539,30 +537,26 @@ class RideService {
     
     switch (updatedRide.status) {
       case 'CANCELED':
-        print('RIDER: Ride status changed to CANCELED');
+        logger.info('RIDER: Ride status changed to CANCELED');
         removeRide = true;
         isSearchingForRide = false;
-        // Don't call cancelRide() here - it would create a loop
-        // Just set the flags to stop searching
         goToNextDriver = true;
         break;
       case 'IN_PROGRESS':
-        print('RIDER: Ride status changed to IN_PROGRESS');
+        logger.info('RIDER: Status changed to IN_PROGRESS (driver accepted!)');
         isSearchingForRide = false;
-        goToNextDriver = true;
         break;
       case 'INITIALIZING':
-        print('RIDER: Ride status is INITIALIZING');
+        logger.info('RIDER: Ride status is INITIALIZING');
         break;
       case 'SEARCHING':
-        print('RIDER: Ride status changed to SEARCHING');
-        goToNextDriver = true;
+        logger.info('RIDER: Status changed to SEARCHING (driver declined)');
         break;
       case 'WAITING':
-        print('RIDER: Ride status is WAITING');
+        logger.info('RIDER: Ride status is WAITING');
         break;
       case 'ENDED':
-        print('RIDER: Ride status changed to ENDED');
+        logger.info('RIDER: Ride status changed to ENDED');
         removeRide = true;
         isSearchingForRide = false;
         goToNextDriver = false;
@@ -573,14 +567,13 @@ class RideService {
         }
         break;
       default:
-        print('RIDER: Unknown ride status: ${updatedRide.status}');
+        logger.info('RIDER: Unknown ride status: ${updatedRide.status}');
     }
   }
 
   Future<void> _initializeRideInFirestore(
       double lat, double long, double paymentPrice) async {
     GeoFirePoint destination = GeoFirePoint(lat, long);
-    // ✅ Use async version to get pickup location
     GeoFirePoint pickup = await locationService.getCurrentGeoFirePointAsync();
     DocumentSnapshot myRide = await rideReference.get();
     
@@ -591,7 +584,7 @@ class RideService {
     }
     
     if (!myRide.exists) {
-      print('Creating new ride document');
+      logger.info('Creating new ride document');
       await rideReference.set({
         'uid': userService.userID,
         'userName': userService.user.firstName,
@@ -606,7 +599,7 @@ class RideService {
         'price': paymentPrice,
       });
     } else {
-      print('Updating existing ride document');
+      logger.info('Updating existing ride document');
       await rideReference.set({
         'uid': userService.userID,
         'userName': userService.user.firstName,
@@ -622,19 +615,17 @@ class RideService {
   }
 
   Future<void> addCurrentRider() async {
-    // Use atomic increment to prevent race conditions
     await currentRidesReference.set({
       'ridesGoingNow': FieldValue.increment(1)
     }, SetOptions(merge: true));
-    print('RIDER: Incremented ridesGoingNow counter');
+    logger.info('RIDER: Incremented ridesGoingNow counter');
   }
 
   Future<void> removeCurrentRider() async {
-    // Use atomic decrement to prevent race conditions
     await currentRidesReference.set({
       'ridesGoingNow': FieldValue.increment(-1)
     }, SetOptions(merge: true));
-    print('RIDER: Decremented ridesGoingNow counter');
+    logger.info('RIDER: Decremented ridesGoingNow counter');
   }
 
   Stream<Ride> getRideStream() {
@@ -660,7 +651,7 @@ class RideService {
         return Ride.fromDocument(rideDoc);
       }
     } catch (e) {
-      print("Error fetching ride: $e");
+      logger.info("Error fetching ride: $e");
       return null;
     }
     return null;
@@ -676,7 +667,7 @@ class RideService {
         'geohash': destinationAddress['geohash']
       };
     } catch (e) {
-      print("Error fetching ride: $e");
+      logger.info("Error fetching ride: $e");
       return null;
     }
   }

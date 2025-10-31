@@ -17,7 +17,7 @@ class LocationService {
   StreamSubscription<Position>? positionSub;
   bool isPositionSubInitialized = false;
   
-  // ✅ Add a completer to track when initial position is ready
+  // Tracks when initial position is ready
   Completer<void>? _initCompleter;
 
   factory LocationService() {
@@ -76,7 +76,7 @@ class LocationService {
         print("LocationService: Permissions granted, getting current position...");
       }
 
-      // ✅ FIX: Get initial position with timeout and fallback
+      // Get initial position with timeout and fallback
       try {
         position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
@@ -141,8 +141,6 @@ class LocationService {
 
       isPositionSubInitialized = true;
       initialized = true;
-
-      // ✅ Complete the initialization
       _initCompleter?.complete();
 
       if (kDebugMode) {
@@ -160,7 +158,7 @@ class LocationService {
     }
   }
 
-  /// ✅ NEW: Ensure service is ready before getting position
+  // Ensure service is ready before getting position
   Future<void> ensureInitialized() async {
     if (initialized && position != null) {
       return; // Already initialized
@@ -179,7 +177,7 @@ class LocationService {
     }
   }
 
-  /// ✅ FIXED: Async version that waits for initialization
+  // Async version that waits for initialization
   Future<GeoFirePoint> getCurrentGeoFirePointAsync() async {
     await ensureInitialized();
     
@@ -193,7 +191,7 @@ class LocationService {
     );
   }
 
-  /// ✅ FIXED: Synchronous version with better error handling
+  // Synchronous version with better error handling
   GeoFirePoint getCurrentGeoFirePoint() {
     if (!initialized) {
       throw Exception(
@@ -213,7 +211,7 @@ class LocationService {
     );
   }
 
-  /// ✅ NEW: Get current position with refresh
+  // Get current position with refresh
   Future<Position> getCurrentPosition({bool forceRefresh = false}) async {
     await ensureInitialized();
 
@@ -241,7 +239,7 @@ class LocationService {
     return position!;
   }
 
-  /// ✅ Check if location is available
+  // Check if location is available
   Future<bool> isLocationAvailable() async {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -268,7 +266,7 @@ class LocationService {
     }
   }
 
-  /// ✅ NEW: Get debug status
+  // Get debug status
   Map<String, dynamic> getStatus() {
     return {
       'initialized': initialized,

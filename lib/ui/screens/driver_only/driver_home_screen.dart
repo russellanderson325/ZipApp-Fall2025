@@ -42,16 +42,6 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
     if (!mounted) return;
     print('UI: Request $requestId timed out');
     Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Ride request timed out',
-          style: TextStyle(color: Colors.black),
-        ),
-        backgroundColor: ZipColors.zipYellow,
-        duration: Duration(seconds: 2),
-      ),
-    );
   }
 
   @override
