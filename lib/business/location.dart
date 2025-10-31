@@ -85,7 +85,7 @@ class LocationService {
         if (kDebugMode) {
           print("LocationService: ✓ Got current position: ${position!.latitude}, ${position!.longitude}");
         }
-      } on TimeoutException catch (e) {
+      } on TimeoutException {
         if (kDebugMode) {
           print("LocationService: Timeout getting position, trying last known...");
         }
@@ -221,14 +221,12 @@ class LocationService {
           desiredAccuracy: LocationAccuracy.high,
           timeLimit: const Duration(seconds: 10),
         );
-      } on TimeoutException catch (e) {
+      } on TimeoutException {
         if (kDebugMode) {
           print("LocationService: Timeout refreshing position");
         }
         // Use cached position if available
-        if (position == null) {
-          position = await Geolocator.getLastKnownPosition();
-        }
+        position ??= await Geolocator.getLastKnownPosition();
       }
     }
 

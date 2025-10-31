@@ -17,8 +17,11 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zipapp/models/primary_payment_method.dart';
+import 'package:zipapp/logger.dart';
+
 
 class Payment {
+  static final AppLogger logger = AppLogger();
   static final _firebaseUser = auth.FirebaseAuth.instance.currentUser;
   static final FirebaseFunctions functions = FirebaseFunctions.instance;
   static PrimaryPaymentMethod primaryPaymentMethodStatic = PrimaryPaymentMethod(
@@ -95,11 +98,11 @@ class Payment {
           });
         }
       } else {
-        print("No documents found with the specified rideId.");
+        logger.info("No documents found with the specified rideId.");
       }
     } catch (e) {
       // Handle errors if the field does not exist or query fails
-      print("Error fetching documents: $e");
+      logger.error("Error fetching documents: $e");
     }
   }
 
@@ -121,7 +124,7 @@ class Payment {
         "card_last4": querySnapshot.docs[0].get('card_last4')
       };
     } else {
-      print("No documents found with the specified rideId.");
+      logger.info("No documents found with the specified rideId.");
       return null;
     }
   }
@@ -153,11 +156,11 @@ class Payment {
           });
         }
       } else {
-        print("No documents found with the specified rideId.");
+        logger.info("No documents found with the specified rideId.");
       }
     } catch (e) {
       // Handle errors if the field does not exist or query fails
-      print("Error fetching documents: $e");
+      logger.error("Error fetching documents: $e");
     }
   }
 
@@ -296,7 +299,7 @@ class Payment {
         'amount': amount,
       });
     } catch (e) {
-      print('Error capturing payment intent: $e');
+      logger.error('Error capturing payment intent: $e');
     }
   }
 
@@ -309,7 +312,7 @@ class Payment {
       Map<String, dynamic> response = Map<String, dynamic>.from(results.data);
       return response;
     } catch (error) {
-      print('Error capturing payment intent: $error');
+      logger.error('Error capturing payment intent: $error');
       rethrow;
     }
   }
@@ -327,7 +330,7 @@ class Payment {
       Map<String, dynamic> response = Map<String, dynamic>.from(results.data);
       return response;
     } catch (error) {
-      print('Error capturing payment intent: $error');
+      logger.error('Error capturing payment intent: $error');
       rethrow;
     }
   }
@@ -379,7 +382,7 @@ class Payment {
       // Payment confirmed
       return {'authorized': true};
     } catch (e) {
-      print('Error confirming payment: $e');
+      logger.error('Error confirming payment: $e');
       return {'authorized': false};
     }
   }
@@ -476,7 +479,7 @@ class Payment {
     });
 
     if (!response.data['success']) {
-      print(
+      logger.error(
           'Error attaching payment method to customer: ${response.data['response']}');
       return;
     }
@@ -517,7 +520,7 @@ class Payment {
       setPrimaryPaymentMethod(false, false, true, paymentMethod.id);
       return paymentMethod;
     } catch (e) {
-      print("Error creating payment method...");
+      logger.error("Error creating payment method...");
       rethrow;
     }
   }
@@ -556,7 +559,7 @@ class Payment {
               Platform.isIOS, Platform.isAndroid, false, '');
         }
       } catch (e) {
-        print('Error calling function: $e');
+        logger.error('Error calling function: $e');
       }
     }
   }
@@ -583,7 +586,7 @@ class Payment {
 
         return paymentMethodIds;
       } catch (e) {
-        print("Error fetching payment method IDs: $e");
+        logger.error("Error fetching payment method IDs: $e");
         return [];
       }
     } else {
@@ -601,8 +604,9 @@ class Payment {
     final results = await getPaymentMethodDetailsCallable
         .call({'paymentMethodId': paymentMethodId});
 
-    if (!results.data['success'])
+    if (!results.data['success']) {
       throw Exception('Error getting payment method details');
+    }
 
     Map<String, dynamic> response =
         Map<String, dynamic>.from(results.data['response']);

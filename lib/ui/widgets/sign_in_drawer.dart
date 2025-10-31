@@ -1,4 +1,3 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -120,7 +119,7 @@ class _SignInDrawerState extends State<SignInDrawer> {
           onPressed: () {},
         );
       }
-    } else if (!Validator.validateEmail(email!)) {
+    } else if (!Validator.validateEmail(email)) {
       _showErrorAlert(
         title: "Invalid Email",
         content: "Please enter a valid email address.",

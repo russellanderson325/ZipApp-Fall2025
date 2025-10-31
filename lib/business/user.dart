@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:zipapp/models/user.dart';
+import 'package:zipapp/logger.dart';
 
 class UserService {
   static final UserService _instance = UserService._internal();
@@ -14,6 +15,8 @@ class UserService {
   late Stream<User> userStream;
   late StreamSubscription userSub;
   late User user;
+
+  final AppLogger logger = AppLogger();
 
   factory UserService() {
     return _instance;
@@ -26,15 +29,15 @@ class UserService {
   }
 
   void startRide(rideId) {
-    print(userID);
+    logger.info(userID);
     // if isRiding exists in the user document, set it to true
     _db.collection("users").doc(userID).set({
       "isRiding": true,
       "currentRideId": rideId,
     }, SetOptions(merge: true)).then((_) {
-      print("Successfully started ride.");
+      logger.info("Successfully started ride.");
     }).catchError((error) {
-      print("Error starting ride: $error");
+      logger.error("Error starting ride: $error");
     });
 
     // Start listening for ride updates
@@ -46,9 +49,9 @@ class UserService {
       "isRiding": false,
       "currentRideId": "",
     }, SetOptions(merge: true)).then((_) {
-      print("Successfully ended ride.");
+      logger.info("Successfully ended ride.");
     }).catchError((error) {
-      print("Error ending ride: $error");
+      logger.error("Error ending ride: $error");
     });
 
     // Reset the map
@@ -76,7 +79,7 @@ class UserService {
       userSub = userStream.listen((user) {
         this.user = user;
       });
-      print("UserService setup with user: $userID");
+      logger.info("UserService setup with user: $userID");
     }
   }
 

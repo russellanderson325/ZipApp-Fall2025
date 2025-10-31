@@ -1,9 +1,9 @@
-import 'package:flutter/foundation.dart';
 import "package:flutter/material.dart";
 import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:zipapp/business/user.dart';
 import 'package:zipapp/constants/zip_colors.dart';
+import 'package:zipapp/logger.dart';
 
 class PreviousTripsScreen extends StatefulWidget {
   const PreviousTripsScreen({super.key});
@@ -18,8 +18,9 @@ class _PreviousTripsScreenState extends State<PreviousTripsScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
   late List<QueryDocumentSnapshot> pastRidesList;
-  late List<dynamic> pastRideIDs;
+  List<dynamic> pastRideIDs = [];
   late DocumentReference rideReference;
+  final AppLogger logger = AppLogger();
 
   @override
   void initState() {
@@ -29,15 +30,29 @@ class _PreviousTripsScreenState extends State<PreviousTripsScreen> {
     super.initState();
   }
 
-  Future _retrievePastRideIDs() async {
-    DocumentReference userRef =
-        _firestore.collection('users').doc(userService.userID);
-    pastRideIDs = (await userRef.get()).get('pastRides');
-    if (pastRideIDs == null) {
+  Future<List<String>> _retrievePastRideIDs() async {
+    try {
+      DocumentReference userRef =
+          _firestore.collection('users').doc(userService.userID);
+      
+      DocumentSnapshot snapshot = await userRef.get();
+      
+      if (!snapshot.exists) {
+        logger.warning('User document not found for ${userService.userID}');
+        pastRideIDs = [];
+        return [];
+      }
+      
+      // Safely get pastRides field with null handling
+      pastRideIDs = List<String>.from(snapshot.get('pastRides') ?? []);
+      
+      logger.info('Retrieved ${pastRideIDs.length} past ride IDs');
+      return pastRideIDs as List<String>;
+    } catch (e) {
+      logger.error('Error retrieving past rides: $e');
       pastRideIDs = [];
+      return [];
     }
-    print('past ride ids: $pastRideIDs');
-    return pastRideIDs;
   }
 
   @override
@@ -49,17 +64,33 @@ class _PreviousTripsScreenState extends State<PreviousTripsScreen> {
             'Past Trips',
           ),
         ),
-        body: FutureBuilder<void>(
+        body: FutureBuilder<List<String>>(
             future: _retrievePastRideIDs(),
-            builder: (context, index) {
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text('Error loading trips: ${snapshot.error}'),
+                );
+              }
+              
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(
+                  child: Text('No past trips found'),
+                );
+              }
+              
               return ListView.builder(
-                  itemCount: pastRideIDs.length,
+                  itemCount: snapshot.data!.length,
                   itemBuilder: (context, index) {
                     return Container(
                       height: 50,
                       color: ZipColors.zipYellow,
                       child: Center(
-                          child: Text('past ride: ${pastRideIDs[index]}')),
+                          child: Text('past ride: ${snapshot.data![index]}')),
                     );
                   });
             }));

@@ -5,6 +5,7 @@ import 'package:zipapp/business/validator.dart';
 import 'package:zipapp/constants/tailwind_colors.dart';
 import 'package:zipapp/constants/zip_colors.dart';
 import 'package:zipapp/constants/zip_design.dart';
+import 'package:zipapp/logger.dart';
 
 class DefaultTipScreen extends StatefulWidget {
   const DefaultTipScreen({super.key});
@@ -16,6 +17,7 @@ class DefaultTipScreen extends StatefulWidget {
 class DefaultTipScreenState extends State<DefaultTipScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final UserService userService = UserService();
+  final AppLogger logger = AppLogger();
   double oldTipAmount = 20.0;
   double? newTipAmount;
   late bool hasChanged;
@@ -41,7 +43,7 @@ class DefaultTipScreenState extends State<DefaultTipScreen> {
         }
       }
     } catch (e) {
-      print("Error loading saved tip amount: $e");
+      logger.error("Error loading saved tip amount: $e");
     }
   }
 
@@ -71,7 +73,7 @@ class DefaultTipScreenState extends State<DefaultTipScreen> {
           hasChanged = false;
         });
       } catch (e) {
-        print("Error saving changes: $e");
+        logger.error("Error saving changes: $e");
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to save changes')),
         );
@@ -223,7 +225,7 @@ class DefaultTipScreenState extends State<DefaultTipScreen> {
               ? ZipDesign.yellowButtonStyle
               : ZipDesign.yellowButtonStyle.copyWith(
                   backgroundColor:
-                      MaterialStateProperty.all(TailwindColors.gray300),
+                      WidgetStateProperty.all(TailwindColors.gray300),
                 ),
           child: Text(
             'Save Changes',

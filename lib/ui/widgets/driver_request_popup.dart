@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:zipapp/models/request.dart';
 import 'package:zipapp/business/drivers.dart';
@@ -56,7 +57,9 @@ class _RideRequestPopupState extends State<RideRequestPopup> {
         Navigator.of(context).pop();
       }
     } catch (e) {
-      print('Error accepting request: $e');
+      if (kDebugMode) {
+        print('Error accepting request: $e');
+      }
       setState(() {
         _isProcessing = false;
       });
@@ -186,7 +189,7 @@ class _RideRequestPopupState extends State<RideRequestPopup> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'null',
+                                '[Time and Miles away]',
                                 style: ZipDesign.bodyText.copyWith(
                                   fontSize: 14,
                                   color: Colors.grey[700],
@@ -194,7 +197,7 @@ class _RideRequestPopupState extends State<RideRequestPopup> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                widget.request.name,
+                                'Pick Up Address',
                                 style: ZipDesign.bodyText.copyWith(
                                   fontSize: 14,
                                   color: Colors.grey[600],
@@ -226,7 +229,7 @@ class _RideRequestPopupState extends State<RideRequestPopup> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'null',
+                                '[Time and Miles away]',
                                 style: ZipDesign.bodyText.copyWith(
                                   fontSize: 14,
                                   color: Colors.grey[700],
@@ -234,7 +237,7 @@ class _RideRequestPopupState extends State<RideRequestPopup> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'Destination',
+                                'Drop Off Address',
                                 style: ZipDesign.bodyText.copyWith(
                                   fontSize: 14,
                                   color: Colors.grey[600],

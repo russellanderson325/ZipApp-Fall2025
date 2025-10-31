@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:zipapp/models/user.dart';
-import 'package:flutter/services.dart';
+import 'package:zipapp/logger.dart';
 
 enum AuthProblems { userNotFound, passwordNotValid, networkError, unknownError }
 
@@ -15,6 +15,7 @@ class AuthService {
   // FirebaseFirestore firestore = FirebaseFirestore.instance;
   //final Fires
   Stream<auth.User?> get user => _auth.authStateChanges();
+  final AppLogger logger = AppLogger();
 
   Future<auth.User?> googleSignIn() async {
     try {
@@ -32,7 +33,7 @@ class AuthService {
       return user;
     } catch (error) {
       if (kDebugMode) {
-        print(error);
+        logger.error(error.toString());
       }
       return null;
     }
@@ -141,7 +142,7 @@ class AuthService {
 
   String getExceptionText(Exception e) {
     if (e is auth.FirebaseAuthException) {
-      print("FROM FIREBASE ${e.code}");
+      logger.info("FROM FIREBASE ${e.code}");
       switch (e.code) {
         case 'invalid-email':
           return 'Invalid email address.';

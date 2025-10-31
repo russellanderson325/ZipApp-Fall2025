@@ -9,6 +9,7 @@ import 'package:zipapp/ui/widgets/payment_methods_list.dart';
 import 'package:zipapp/ui/screens/stripe_card_info_prompt_screen.dart';
 import 'package:zipapp/ui/screens/rider_only/default_tip_screen.dart';
 import 'package:zipapp/business/user.dart';
+import 'package:zipapp/logger.dart';
 
 class PaymentsScreen extends StatefulWidget {
   const PaymentsScreen({super.key});
@@ -25,6 +26,8 @@ class PaymentsScreen extends StatefulWidget {
 
 class PaymentsScreenState extends State<PaymentsScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final AppLogger logger = AppLogger();
+
   UserService userService = UserService();
   static UniqueKey uniqueKey = UniqueKey();
   static bool forceUpdate = false;
@@ -41,7 +44,7 @@ class PaymentsScreenState extends State<PaymentsScreen> {
         }
       }
     } catch (e) {
-      print("Error fetching default tip amount: $e");
+      logger.error("Error fetching default tip amount: $e");
     }
     return 20.0; // Default value if none is found
   }
@@ -132,12 +135,12 @@ class PaymentsScreenState extends State<PaymentsScreen> {
                           setState(() {});
                         },
                         style: ButtonStyle(
-                          padding: MaterialStateProperty.all(
+                          padding: WidgetStateProperty.all(
                               const EdgeInsets.all(0)),
                           foregroundColor:
-                              MaterialStateProperty.all(Colors.black),
+                              WidgetStateProperty.all(Colors.black),
                           textStyle:
-                              MaterialStateProperty.all(ZipDesign.labelText),
+                              WidgetStateProperty.all(ZipDesign.labelText),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,

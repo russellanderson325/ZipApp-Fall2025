@@ -9,6 +9,7 @@ import 'package:zipapp/models/user.dart';
 import 'package:zipapp/ui/widgets/authentication_drawer_widgets.dart';
 import 'package:zipapp/ui/widgets/custom_alert_dialog.dart';
 import 'package:zipapp/ui/widgets/custom_flat_button.dart';
+import 'package:zipapp/logger.dart';
 
 class CreateAccountDrawer extends StatefulWidget {
   final Function switchDrawers;
@@ -19,6 +20,7 @@ class CreateAccountDrawer extends StatefulWidget {
 }
 
 class _CreateAccountDrawerState extends State<CreateAccountDrawer> {
+  final AppLogger logger = AppLogger();
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -164,18 +166,18 @@ class _CreateAccountDrawerState extends State<CreateAccountDrawer> {
         String exception = auth.getExceptionText(e as Exception);
         _showErrorAlert(
           title: "Error",
-          content: "$exception",
+          content: exception,
           onPressed: () {},
         );
-        print('The error is $exception');
+        logger.error('The error is $exception');
       }
-    } else if (!Validator.validateEmail(email!)) {
+    } else if (!Validator.validateEmail(email)) {
       _showErrorAlert(
         title: "Invalid Email",
         content: "Please enter a valid email address.",
         onPressed: () {},
       );
-    } else if (!Validator.validatePassword(password!)) {
+    } else if (!Validator.validatePassword(password)) {
       _showErrorAlert(
         title: "Invalid Password",
         content: "Password must be at least 6 characters long.",

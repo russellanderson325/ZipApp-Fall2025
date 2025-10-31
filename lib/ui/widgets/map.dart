@@ -19,7 +19,7 @@ import 'package:zipapp/ui/screens/rider_only/search_screen.dart';
 import 'package:zipapp/ui/screens/rider_only/vehicle_ride_status_confirmation_screen.dart';
 import 'package:zipapp/ui/screens/rider_only/vehicles_screen.dart';
 import 'package:zipapp/ui/widgets/message_overlay.dart';
-
+import 'package:zipapp/logger.dart';
 import 'package:geolocator/geolocator.dart';
 
 class MapWidget extends StatefulWidget {
@@ -31,6 +31,7 @@ class MapWidget extends StatefulWidget {
 }
 
 class MapWidgetSampleState extends State<MapWidget> {
+  final AppLogger logger = AppLogger();
   //general map code
   String mapTheme = '';
   final Completer<GoogleMapController> _controller =
@@ -61,7 +62,7 @@ class MapWidgetSampleState extends State<MapWidget> {
 
     // Initialize with Auburn coordinates immediately to ensure map loads
     userLatLng = const LatLng(32.6099, -85.4808);
-    print('Initial position set to Auburn: $userLatLng');
+    logger.info('Initial position set to Auburn: $userLatLng');
 
     DefaultAssetBundle.of(context)
         .loadString('assets/mapthemes/uber_theme.json')
@@ -83,13 +84,13 @@ class MapWidgetSampleState extends State<MapWidget> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          print('Location permissions are denied');
+          logger.info('Location permissions are denied');
           return;
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        print('Location permissions are permanently denied');
+        logger.info('Location permissions are permanently denied');
         return;
       }
 
@@ -98,7 +99,7 @@ class MapWidgetSampleState extends State<MapWidget> {
       if (lastKnown != null && mounted) {
         setState(() {
           userLatLng = LatLng(lastKnown.latitude, lastKnown.longitude);
-          print('Using last known position: $userLatLng');
+          logger.info('Using last known position: $userLatLng');
         });
         _centerMapOnUser();
       }
@@ -113,7 +114,7 @@ class MapWidgetSampleState extends State<MapWidget> {
         setState(() {
           userLatLng =
               LatLng(currentPosition.latitude, currentPosition.longitude);
-          print('Updated to current position: $userLatLng');
+          logger.info('Updated to current position: $userLatLng');
         });
         _centerMapOnUser();
       }
@@ -131,7 +132,7 @@ class MapWidgetSampleState extends State<MapWidget> {
         }
       });
     } catch (error) {
-      print('ERROR getting position: $error');
+      logger.error('ERROR getting position: $error');
       // Keep Auburn coordinates as fallback - map is already loaded
     }
   }
@@ -146,9 +147,9 @@ class MapWidgetSampleState extends State<MapWidget> {
         await controller.animateCamera(CameraUpdate.newCameraPosition(
           CameraPosition(target: userLatLng!, zoom: 17.5),
         ));
-        print('Camera centered on user location: $userLatLng');
+        logger.info('Camera centered on user location: $userLatLng');
       } catch (e) {
-        print('Error centering map: $e');
+        logger.error('Error centering map: $e');
       }
     }
   }
@@ -220,9 +221,10 @@ class MapWidgetSampleState extends State<MapWidget> {
   void clockIn() async {
     // Prevent the user from spamming the clock in button
     if (DateTime.now().difference(lastClockInButtonPress).inSeconds < 5) {
-      if (mounted)
+      if (mounted) {
         MessageOverlay.angryMessage(
             context, "Please wait a few seconds before trying again.");
+      }
       return;
     }
     lastClockInButtonPress = DateTime.now();
@@ -252,9 +254,10 @@ class MapWidgetSampleState extends State<MapWidget> {
 
   void clockOut() async {
     if (DateTime.now().difference(lastClockOutButtonPress).inSeconds < 5) {
-      if (mounted)
+      if (mounted) {
         MessageOverlay.angryMessage(
             context, "Please wait a few seconds before trying again.");
+      }
       return;
     }
     lastClockOutButtonPress = DateTime.now();
@@ -280,9 +283,10 @@ class MapWidgetSampleState extends State<MapWidget> {
 
   void startBreak() async {
     if (DateTime.now().difference(lastStartBreakButtonPress).inSeconds < 5) {
-      if (mounted)
+      if (mounted) {
         MessageOverlay.angryMessage(
             context, "Please wait a few seconds before trying again.");
+      }
       return;
     }
     lastStartBreakButtonPress = DateTime.now();
@@ -308,9 +312,10 @@ class MapWidgetSampleState extends State<MapWidget> {
 
   void endBreak() async {
     if (DateTime.now().difference(lastEndBreakButtonPress).inSeconds < 5) {
-      if (mounted)
+      if (mounted) {
         MessageOverlay.angryMessage(
             context, "Please wait a few seconds before trying again.");
+      }
       return;
     }
     lastEndBreakButtonPress = DateTime.now();
@@ -406,18 +411,18 @@ class MapWidgetSampleState extends State<MapWidget> {
                           ? const Text('Resume driving')
                           : const Text('Start break'),
                       style: ButtonStyle(
-                        shape: MaterialStateProperty.all(RoundedRectangleBorder(
+                        shape: WidgetStateProperty.all(RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8))),
                         padding:
-                            MaterialStateProperty.all(const EdgeInsets.all(0)),
-                        iconColor: MaterialStateProperty.all(Colors.black),
-                        iconSize: MaterialStateProperty.all(16),
+                            WidgetStateProperty.all(const EdgeInsets.all(0)),
+                        iconColor: WidgetStateProperty.all(Colors.black),
+                        iconSize: WidgetStateProperty.all(16),
                         foregroundColor:
-                            MaterialStateProperty.all(Colors.black),
+                            WidgetStateProperty.all(Colors.black),
                         backgroundColor:
-                            MaterialStateProperty.all(ZipColors.zipYellow),
+                            WidgetStateProperty.all(ZipColors.zipYellow),
                         textStyle:
-                            MaterialStateProperty.all(ZipDesign.labelText),
+                            WidgetStateProperty.all(ZipDesign.labelText),
                       ),
                     ),
                   ),
@@ -428,18 +433,18 @@ class MapWidgetSampleState extends State<MapWidget> {
                       icon: const Icon(LucideIcons.logOut),
                       label: const Text('Clock out'),
                       style: ButtonStyle(
-                        shape: MaterialStateProperty.all(RoundedRectangleBorder(
+                        shape: WidgetStateProperty.all(RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8))),
                         padding:
-                            MaterialStateProperty.all(const EdgeInsets.all(0)),
-                        iconColor: MaterialStateProperty.all(Colors.black),
-                        iconSize: MaterialStateProperty.all(16),
+                            WidgetStateProperty.all(const EdgeInsets.all(0)),
+                        iconColor: WidgetStateProperty.all(Colors.black),
+                        iconSize: WidgetStateProperty.all(16),
                         foregroundColor:
-                            MaterialStateProperty.all(Colors.black),
+                            WidgetStateProperty.all(Colors.black),
                         backgroundColor:
-                            MaterialStateProperty.all(ZipColors.zipYellow),
+                            WidgetStateProperty.all(ZipColors.zipYellow),
                         textStyle:
-                            MaterialStateProperty.all(ZipDesign.labelText),
+                            WidgetStateProperty.all(ZipDesign.labelText),
                       ),
                     ),
                   ),
@@ -450,15 +455,15 @@ class MapWidgetSampleState extends State<MapWidget> {
                 icon: const Icon(LucideIcons.logIn),
                 label: const Text('Clock in as a driver'),
                 style: ButtonStyle(
-                  shape: MaterialStateProperty.all(RoundedRectangleBorder(
+                  shape: WidgetStateProperty.all(RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8))),
-                  padding: MaterialStateProperty.all(const EdgeInsets.all(0)),
-                  iconColor: MaterialStateProperty.all(Colors.black),
-                  iconSize: MaterialStateProperty.all(16),
-                  foregroundColor: MaterialStateProperty.all(Colors.black),
+                  padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
+                  iconColor: WidgetStateProperty.all(Colors.black),
+                  iconSize: WidgetStateProperty.all(16),
+                  foregroundColor: WidgetStateProperty.all(Colors.black),
                   backgroundColor:
-                      MaterialStateProperty.all(ZipColors.zipYellow),
-                  textStyle: MaterialStateProperty.all(ZipDesign.labelText),
+                      WidgetStateProperty.all(ZipColors.zipYellow),
+                  textStyle: WidgetStateProperty.all(ZipDesign.labelText),
                 ),
               ),
       ),
@@ -581,17 +586,17 @@ class MapWidgetSampleState extends State<MapWidget> {
               );
             } else {
               // Handle the case where distanceValue is null, perhaps notify the user or log an error
-              print("Error: PolylineResult returned null for distanceValue.");
+              logger.error("Error: PolylineResult returned null for distanceValue.");
             }
           }
         } else {
           // Handle the case where GooglePlace details return null
-          print("Error: Failed to retrieve place details.");
+          logger.error("Error: Failed to retrieve place details.");
         }
       },
     ).catchError((error) {
       // Handle potential errors like network issues
-      print("Error fetching place details: $error");
+      logger.error("Error fetching place details: $error");
     });
   }
 

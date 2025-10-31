@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:zipapp/business/user.dart';
@@ -7,6 +7,7 @@ import 'package:zipapp/constants/zip_colors.dart';
 import 'package:zipapp/constants/zip_design.dart';
 import 'package:zipapp/constants/zip_formats.dart';
 import 'package:zipapp/ui/widgets/rating_drawer.dart';
+import 'package:zipapp/logger.dart';
 
 class RideDetailsScreen extends StatefulWidget {
   final String destination;
@@ -41,10 +42,10 @@ class RideDetailsScreen extends StatefulWidget {
 }
 
 class _RideDetailsScreenState extends State<RideDetailsScreen> {
+  final AppLogger logger = AppLogger();
   final UserService userService = UserService();
   final DraggableScrollableController scrollController =
       DraggableScrollableController();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   final int drawerDelayMS = 400;
   bool submitted = false;
@@ -166,7 +167,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                   ],
                 ),
                 Padding(
-                  padding: EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.only(bottom: 16),
                   child: Text('Trip ID: ${widget.id}',
                       style: ZipDesign.tinyLightText),
                 ),
@@ -306,15 +307,15 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
           child: TextButton(
             onPressed: showDrawer,
             style: ButtonStyle(
-              fixedSize: MaterialStateProperty.all(const Size(64, 23)),
-              padding: MaterialStateProperty.all(const EdgeInsets.all(0)),
-              shape: MaterialStateProperty.all(
+              fixedSize: WidgetStateProperty.all(const Size(64, 23)),
+              padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
+              shape: WidgetStateProperty.all(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
               backgroundColor:
-                  MaterialStateProperty.all(TailwindColors.gray200),
+                  WidgetStateProperty.all(TailwindColors.gray200),
             ),
             child: Text(
               buttonTitle,
@@ -353,15 +354,15 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
           child: TextButton(
             onPressed: showDrawer,
             style: ButtonStyle(
-              fixedSize: MaterialStateProperty.all(const Size(64, 23)),
-              padding: MaterialStateProperty.all(const EdgeInsets.all(0)),
-              shape: MaterialStateProperty.all(
+              fixedSize: WidgetStateProperty.all(const Size(64, 23)),
+              padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
+              shape: WidgetStateProperty.all(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
               backgroundColor:
-                  MaterialStateProperty.all(TailwindColors.gray200),
+                  WidgetStateProperty.all(TailwindColors.gray200),
             ),
             child: Text(
               buttonTitle,
@@ -378,7 +379,8 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
     );
   }
 
-  // TODO: Implement _getRideTip
+  /*
+  * TODO: Implement _getRideTip
   Future<void> _getRideTip() async {
     try {
       var ratingCollection = _firestore.collection('ratings');
@@ -396,8 +398,11 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
           "Error loading default tip percentage, using local default instead: $e");
     }
   }
+  */
 
-  //TODO: Implement _getRideRating
+ 
+  /*
+  * TODO: Implement _getRideRating
   Future<void> _getRideRating() async {
     try {
       var ratingCollection = _firestore.collection('ratings');
@@ -415,6 +420,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
           "Error loading default tip percentage, using local default instead: $e");
     }
   }
+  */
 
   void _updateTipAndRating() {
     setState(() {
@@ -439,7 +445,9 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
 
   Widget _buildPaymentRow(IconData icon, String? cardName, String? last4,
       double price, String? paymentMethod, String status) {
-    print(paymentMethod);
+    if (kDebugMode) {
+      print(paymentMethod);
+    }
     if (status == "CANCELED" || status == "IN_PROGRESS") {
       return const Row();
     }

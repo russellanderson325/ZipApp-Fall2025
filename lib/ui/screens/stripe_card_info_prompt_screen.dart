@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:zipapp/services/payment.dart';
 import 'package:zipapp/constants/zip_colors.dart';
+import 'package:zipapp/logger.dart';
+
 
 class StripeCardInfoPromptScreen extends StatefulWidget {
   final Function refreshKey;
@@ -16,6 +18,7 @@ class StripeCardInfoPromptScreenState extends State<StripeCardInfoPromptScreen> 
   String statusMessage = " ";
   static DateTime lastButtonPress = DateTime(0);
   static bool stripeButtonPressed = false;
+  final AppLogger logger = AppLogger();
 
   @override
   Widget build(BuildContext context) {
@@ -75,20 +78,20 @@ class StripeCardInfoPromptScreenState extends State<StripeCardInfoPromptScreen> 
                 Payment.createPaymentMethod().then((paymentMethod) async {
                   // Get the payment method with the fingerprint
                   Map<String, dynamic>? paymentMethodWithFingerprint = await Payment.getPaymentMethodById(paymentMethod!.id);
-                  print("Payment Method: $paymentMethodWithFingerprint");
+                  logger.info("Payment Method: $paymentMethodWithFingerprint");
                   // Get the fingerprint
                   String fingerprint = paymentMethodWithFingerprint!['fingerprint'];
 
                   // Save the payment method to the Firestore database
                   // Note: If the finger print already exists in the users payment methods, it will not be added
                   // and the payment method will be removed from the Stripe API
-                  print("Fingerprint: $fingerprint");
+                  logger.info("Fingerprint: $fingerprint");
                   await Payment.setPaymentMethodIdAndFingerprint(paymentMethod.id, fingerprint);
                   
                   Navigator.pop(context);
                   widget.refreshKey();
                 }).catchError((e) {
-                  print(e.toString());
+                  logger.error(e.toString());
                   switch (e.toString()) {
                     case "Exception: Payment method already exists":
                       setState(() {

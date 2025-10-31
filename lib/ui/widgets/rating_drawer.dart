@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -6,6 +7,7 @@ import 'package:zipapp/constants/tailwind_colors.dart';
 import 'package:zipapp/constants/zip_colors.dart';
 import 'package:zipapp/constants/zip_design.dart';
 import 'package:zipapp/ui/widgets/authentication_drawer_widgets.dart';
+import 'package:zipapp/logger.dart';
 
 typedef ClearDataBuilder = void Function(
   BuildContext context,
@@ -33,6 +35,8 @@ class _RatingDrawerState extends State<RatingDrawer> {
   final TextEditingController _tipController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   AuthenticationDrawerWidgets adw = AuthenticationDrawerWidgets();
+
+  final AppLogger logger = AppLogger();
 
   final double _tripPrice = 12.23;
   final String _driver = 'John D.';
@@ -63,7 +67,7 @@ class _RatingDrawerState extends State<RatingDrawer> {
         }
       }
     } catch (e) {
-      print(
+      logger.error(
           "Error loading default tip percentage, using local default instead: $e");
     }
   }
@@ -327,7 +331,9 @@ class _RatingDrawerState extends State<RatingDrawer> {
       });
       widget.closeDrawer();
     } catch (e) {
-      print(e); // For debugging purposes
+      if (kDebugMode) {
+        print (e);
+      } // For debugging purposes
     }
   }
 }

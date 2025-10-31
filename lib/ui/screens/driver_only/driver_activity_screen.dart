@@ -16,71 +16,7 @@ class _DriverActivityScreenState extends State<DriverActivityScreen> {
   @override
   void initState() {
     super.initState();
-    //_populateRideActivityData();
-  }
-
-  void _populateRideActivityData() {
-    List<Ride> tempRides = [];
-    //calculate the average rating
-
-    tempRides = [
-      Ride(
-          destination: 'Jordan Hare Stadium',
-          dateTime: DateTime(2024, 10, 12, 14, 30),
-          price: 12.23,
-          rating: 5.0),
-      Ride(
-          destination: 'Jordan Hare Stadium',
-          dateTime: DateTime(2024, 10, 12, 14, 30),
-          price: 12.23,
-          rating: 5.0),
-      Ride(
-          destination: 'Jordan Hare Stadium',
-          dateTime: DateTime(2024, 10, 12, 14, 30),
-          price: 12.23,
-          rating: 5.0),
-      Ride(
-          destination: 'Jordan Hare Stadium',
-          dateTime: DateTime(2024, 10, 12, 14, 30),
-          price: 12.23,
-          rating: 5.0),
-      Ride(
-          destination: 'Jordan Hare Stadium',
-          dateTime: DateTime(2024, 10, 12, 14, 30),
-          price: 12.23,
-          rating: 5.0),
-      Ride(
-          destination: 'Jordan Hare Stadium',
-          dateTime: DateTime(2024, 10, 12, 14, 30),
-          price: 12.23,
-          rating: 5.0),
-      Ride(
-          destination: 'Jordan Hare Stadium',
-          dateTime: DateTime(2024, 10, 12, 14, 30),
-          price: 12.23,
-          rating: 5.0),
-      Ride(
-          destination: 'Jordan Hare Stadium',
-          dateTime: DateTime(2024, 10, 12, 14, 30),
-          price: 12.23,
-          rating: 5.0),
-      Ride(
-          destination: 'Jordan Hare Stadium',
-          dateTime: DateTime(2024, 10, 12, 14, 30),
-          price: 12.23,
-          rating: 5.0),
-      Ride(
-          destination: 'Jordan Hare Stadium',
-          dateTime: DateTime(2024, 10, 12, 14, 30),
-          price: 12.23,
-          rating: 5.0),
-    ];
-    double sumRatings = tempRides.fold(0.0, (sum, item) => sum + item.rating);
-    averageRating = sumRatings / tempRides.length;
-
-    setState(() {
-      rides = tempRides;
-    });
+    // TODO: Load real ride data from Firebase
   }
 
   @override
@@ -114,10 +50,8 @@ class _DriverActivityScreenState extends State<DriverActivityScreen> {
                     style: DefaultTextStyle.of(context).style,
                     children: [
                       TextSpan(
-                        text: averageRating
-                            .toStringAsFixed(1), // Average rating value
-                        style:
-                            const TextStyle(color: Colors.black, fontSize: 28),
+                        text: averageRating.toStringAsFixed(1),
+                        style: const TextStyle(color: Colors.black, fontSize: 28),
                       ),
                       const TextSpan(
                         text: ' / 5.0',
@@ -142,18 +76,18 @@ class _DriverActivityScreenState extends State<DriverActivityScreen> {
               style: ZipDesign.sectionTitleText,
             ),
             Expanded(
-              child: ListView.builder(
-                itemCount: rides.length,
-                itemBuilder: (context, index) {
-                  return DriverActivityItem(
-                    destination: rides[index].destination,
-                    dateTime: rides[index].dateTime,
-                    price: rides[index].price,
-
-                    // rating: rides[index].rating,
-                  );
-                },
-              ),
+              child: rides.isEmpty
+                  ? const Center(child: Text('No completed trips yet'))
+                  : ListView.builder(
+                      itemCount: rides.length,
+                      itemBuilder: (context, index) {
+                        return DriverActivityItem(
+                          destination: rides[index].destination,
+                          dateTime: rides[index].dateTime,
+                          price: rides[index].price,
+                        );
+                      },
+                    ),
             )
           ],
         ),
@@ -175,8 +109,3 @@ class Ride {
     this.rating = 5.0,
   });
 }
-
-
-// Ensure that your RideActivityItem widget can accept and properly display
-// the destination, dateTime, and price properties.
-

@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:zipapp/business/user.dart';
 import 'package:zipapp/business/drivers.dart';
 import 'package:zipapp/models/request.dart';
-import 'package:zipapp/ui/widgets/driverRequestPopUp.dart';
+import 'package:zipapp/ui/widgets/driver_request_popup.dart';
 import 'package:zipapp/ui/widgets/map.dart' as mapwidget;
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:zipapp/constants/zip_design.dart';
-import 'package:zipapp/constants/zip_colors.dart';
+import 'package:zipapp/logger.dart';
+
 
 class DriverHomeScreen extends StatefulWidget {
   const DriverHomeScreen({super.key});
@@ -18,6 +17,7 @@ class DriverHomeScreen extends StatefulWidget {
 class _DriverHomeScreenState extends State<DriverHomeScreen> {
   UserService userService = UserService();
   final DriverService _driverService = DriverService();
+  final AppLogger logger = AppLogger();
 
   @override
   void initState() {
@@ -34,13 +34,13 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
 
   void _handleNewRequest(Request request) {
     if (!mounted) return;
-    print('UI: New request received - showing popup');
+    logger.info('UI: New request received - showing popup');
     showRideRequestPopup(context, request, () {});
   }
 
   void _handleRequestTimeout(String requestId) {
     if (!mounted) return;
-    print('UI: Request $requestId timed out');
+    logger.info('UI: Request $requestId timed out');
     Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst);
   }
 

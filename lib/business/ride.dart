@@ -492,12 +492,14 @@ class RideService {
     return false;
   }
 
+/*
   void _retrievePickupRadius() async {
     DocumentReference adminSettingsRef =
         _firestore.collection('config_settings').doc('admin_settings');
     pickupRadius =
         (await adminSettingsRef.get()).get('PickupRadius').toDouble();
   }
+  */
 
   /// Calculate distance between two points in miles using Haversine formula
   double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {

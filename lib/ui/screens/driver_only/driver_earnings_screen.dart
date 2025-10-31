@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:zipapp/logger.dart';
 
 class DriverIncomeScreen extends StatefulWidget {
   const DriverIncomeScreen({super.key});
@@ -14,6 +15,7 @@ class DriverIncomeScreen extends StatefulWidget {
 }
 
 class _DriverIncomeScreenState extends State<DriverIncomeScreen> {
+  final AppLogger logger = AppLogger();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   double totalEarnings = 0.0;
   String stripeAccountId = '';
@@ -40,13 +42,13 @@ class _DriverIncomeScreenState extends State<DriverIncomeScreen> {
         });
       }
     } catch (e) {
-      print("Error fetching driver earnings: $e");
+      logger.error("Error fetching driver earnings: $e");
     }
   }
 
   Future<void> fetchStripeAccountStatus() async {
     if (stripeAccountId.isEmpty) {
-      print('Stripe account not connected.');
+      logger.info('Stripe account not connected.');
       setState(() {
         stripeAccountStatus = 'Not Connected';
       });
@@ -64,7 +66,7 @@ class _DriverIncomeScreenState extends State<DriverIncomeScreen> {
         stripeAccountStatus = response.data['status'] ?? 'Unknown';
       });
     } catch (e) {
-      print('Error fetching Stripe account status: $e');
+      logger.error('Error fetching Stripe account status: $e');
       setState(() {
         stripeAccountStatus = 'Error';
       });
@@ -75,7 +77,7 @@ class _DriverIncomeScreenState extends State<DriverIncomeScreen> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
-        print('User is not authenticated.');
+        logger.error('User is not authenticated.');
         return;
       }
 
@@ -89,17 +91,17 @@ class _DriverIncomeScreenState extends State<DriverIncomeScreen> {
 
       if (response.data['success']) {
         final onboardingUrl = response.data['url'];
-        print('Onboarding URL: $onboardingUrl'); // Debugging
+        logger.info('Onboarding URL: $onboardingUrl'); // Debugging
         if (await canLaunchUrl(Uri.parse(onboardingUrl))) {
           await launchUrl(Uri.parse(onboardingUrl)); // Open the Stripe onboarding URL
         } else {
-          print('Could not launch onboarding URL.');
+          logger.error('Could not launch onboarding URL.');
         }
       } else {
-        print('Failed to create driver account.');
+        logger.error('Failed to create driver account.');
       }
     } catch (e) {
-      print('Error setting up bank account: $e');
+      logger.error('Error setting up bank account: $e');
     }
   }
 
@@ -116,6 +118,7 @@ Widget build(BuildContext context) {
     fontSize: 16,
   );
 
+  // ignore: unused_local_variable
   const TextStyle detailStyle = TextStyle(
     color: Colors.grey,
     fontSize: 14,
@@ -195,7 +198,7 @@ Widget build(BuildContext context) {
           if (stripeAccountStatus != 'Connected') // Show button only if not connected
             ElevatedButton(
               onPressed: () {
-                print('Button clicked'); // Debugging
+                logger.info('Button clicked'); // Debugging
                 setupBankAccount();
               },
               style: ElevatedButton.styleFrom(
