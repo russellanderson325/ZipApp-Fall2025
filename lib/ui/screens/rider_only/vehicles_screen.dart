@@ -118,23 +118,23 @@ class VehiclesScreenState extends State<VehiclesScreen> {
                                 setCartValues("X Golf Cart", "X", false);
                               },
                               style: ButtonStyle(
-                                padding: WidgetStateProperty.all(
+                                padding: MaterialStateProperty.all(
                                     const EdgeInsets.all(0)),
                                 foregroundColor:
-                                    WidgetStateProperty.all(Colors.black),
-                                backgroundColor: WidgetStateProperty.all(
+                                    MaterialStateProperty.all(Colors.black),
+                                backgroundColor: MaterialStateProperty.all(
                                     model == 'X'
                                         ? ZipColors.primaryBackground
                                         : Colors.white),
-                                shape: WidgetStateProperty.all(
+                                shape: MaterialStateProperty.all(
                                     RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 )),
-                                side: WidgetStateProperty.all(BorderSide(
+                                side: MaterialStateProperty.all(BorderSide(
                                     color: model == 'X'
                                         ? ZipColors.boxBorder
                                         : TailwindColors.gray500)),
-                                fixedSize: WidgetStateProperty.all(
+                                fixedSize: MaterialStateProperty.all(
                                     const Size(160, 80)),
                               ),
                               child: const Image(
@@ -149,23 +149,23 @@ class VehiclesScreenState extends State<VehiclesScreen> {
                                 setCartValues("XL Golf Cart", "XL", true);
                               },
                               style: ButtonStyle(
-                                padding: WidgetStateProperty.all(
+                                padding: MaterialStateProperty.all(
                                     const EdgeInsets.all(0)),
                                 foregroundColor:
-                                    WidgetStateProperty.all(Colors.black),
-                                backgroundColor: WidgetStateProperty.all(
+                                    MaterialStateProperty.all(Colors.black),
+                                backgroundColor: MaterialStateProperty.all(
                                     model == 'XL'
                                         ? ZipColors.primaryBackground
                                         : Colors.white),
-                                shape: WidgetStateProperty.all(
+                                shape: MaterialStateProperty.all(
                                     RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 )),
-                                side: WidgetStateProperty.all(BorderSide(
+                                side: MaterialStateProperty.all(BorderSide(
                                     color: model == 'XL'
                                         ? ZipColors.boxBorder
                                         : Colors.grey)),
-                                fixedSize: WidgetStateProperty.all(
+                                fixedSize: MaterialStateProperty.all(
                                     const Size(160, 80)),
                               ),
                               child: const Image(
@@ -243,11 +243,11 @@ class VehiclesScreenState extends State<VehiclesScreen> {
                                 );
                               },
                               style: ButtonStyle(
-                                padding: WidgetStateProperty.all(
+                                padding: MaterialStateProperty.all(
                                     const EdgeInsets.all(0)),
                                 foregroundColor:
-                                    WidgetStateProperty.all(Colors.black),
-                                textStyle: WidgetStateProperty.all(
+                                    MaterialStateProperty.all(Colors.black),
+                                textStyle: MaterialStateProperty.all(
                                     ZipDesign.labelText),
                               ),
                               child: Row(

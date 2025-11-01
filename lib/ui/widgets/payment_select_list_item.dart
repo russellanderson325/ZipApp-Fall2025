@@ -42,9 +42,9 @@ class PaymentSelectListItem {
               refreshKey();
             },
             style: ButtonStyle(
-              padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
-              foregroundColor: WidgetStateProperty.all(Colors.black),
-              textStyle: WidgetStateProperty.all(ZipDesign.labelText),
+              padding: MaterialStateProperty.all(const EdgeInsets.all(0)),
+              foregroundColor: MaterialStateProperty.all(Colors.black),
+              textStyle: MaterialStateProperty.all(ZipDesign.labelText),
             ),
             child: Row(
               mainAxisAlignment:
