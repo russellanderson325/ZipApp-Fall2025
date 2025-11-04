@@ -69,7 +69,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ZipColors.backgroundLighter,
+      backgroundColor: ZipColors.primaryBackground,
       body: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

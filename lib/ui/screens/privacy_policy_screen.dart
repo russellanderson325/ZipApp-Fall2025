@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:zipapp/constants/zip_colors.dart';
 
 class PrivacyPolicyScreen extends StatefulWidget {
   const PrivacyPolicyScreen({super.key});
@@ -11,6 +12,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: ZipColors.primaryBackground,
         body: Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
