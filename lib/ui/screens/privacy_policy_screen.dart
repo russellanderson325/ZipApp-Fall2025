@@ -20,11 +20,23 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
           const Text('Privacy Policy Screen'),
           // go back text button
           TextButton(
+            style: TextButton.styleFrom(
+                foregroundColor: ZipColors.submittedYellowBorder, // text color
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+            ),
             onPressed: () {
               Navigator.pop(context);
             },
-            child: const Text('Go Back'),
-          )
+            child: const Text(
+              'Go Back',
+              style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                ),
+            ),
+          ),
         ],
       ),
     ));

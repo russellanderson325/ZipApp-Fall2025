@@ -91,6 +91,8 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
       backgroundColor: ZipColors.primaryBackground,
       appBar: AppBar(
         title: const Text('Help Center'),
+        backgroundColor: ZipColors.primaryBackground,
+        elevation: 0,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -130,16 +132,31 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
               _isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          _sendToHelpCenter();
-                        }
-                      },
-                      child: const Text('Send'),
+                  : SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ZipColors.zipYellow, // yellow background
+                          foregroundColor: Colors.black, // readable text
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            _sendToHelpCenter();
+                          }
+                        },
+                        child: const Text('Send'),
+                      ),
                     ),
             ],
           ),
