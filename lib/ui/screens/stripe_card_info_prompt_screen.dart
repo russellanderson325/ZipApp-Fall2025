@@ -88,10 +88,15 @@ class StripeCardInfoPromptScreenState extends State<StripeCardInfoPromptScreen> 
                   logger.info("Fingerprint: $fingerprint");
                   await Payment.setPaymentMethodIdAndFingerprint(paymentMethod.id, fingerprint);
                   
+                  if (!mounted) return;
+                  
                   Navigator.pop(context);
                   widget.refreshKey();
                 }).catchError((e) {
                   logger.error(e.toString());
+                  
+                  if (!mounted) return;
+                  
                   switch (e.toString()) {
                     case "Exception: Payment method already exists":
                       setState(() {

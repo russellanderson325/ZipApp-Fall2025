@@ -66,6 +66,9 @@ class DefaultTipScreenState extends State<DefaultTipScreen> {
         await _firestore.collection('users').doc(userService.userID).update({
           'defaultTip': newTipAmount,
         });
+        
+        if (!mounted) return;
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Changes saved successfully')),
         );
@@ -74,6 +77,9 @@ class DefaultTipScreenState extends State<DefaultTipScreen> {
         });
       } catch (e) {
         logger.error("Error saving changes: $e");
+        
+        if (!mounted) return;
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to save changes')),
         );

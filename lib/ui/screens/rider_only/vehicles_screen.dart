@@ -332,12 +332,13 @@ class VehiclesScreenState extends State<VehiclesScreen> {
                                 merchantCountryCode)
                             .then((result) async {
                           if (result['authorized']) {
-                            if (mounted) {
-                              MessageOverlay.happyMessage(
-                                  context,
-                                  "Payment intent successfully authorized. Please"
-                                  " wait for a driver to accept the ride.");
-                            }
+                            if (!mounted) return;
+                            
+                            MessageOverlay.happyMessage(
+                                context,
+                                "Payment intent successfully authorized. Please"
+                                " wait for a driver to accept the ride.");
+                            
                             Navigator.pop(context);
                             rideService.initializeRideWithoutID();
                             VehicleRideStatusConfirmationScreenState
@@ -357,28 +358,34 @@ class VehiclesScreenState extends State<VehiclesScreen> {
                             });
                           } else {
                             // Cancel the ride
+                            if (!mounted) return;
+                            
+                            MessageOverlay.angryMessage(
+                                context,
+                                "Payment intent unable to authorize. Please"
+                                " check your payment method and try again.");
+                            
                             if (mounted) {
-                              MessageOverlay.angryMessage(
-                                  context,
-                                  "Payment intent unable to authorize. Please"
-                                  " check your payment method and try again.");
+                              setState(() {
+                                loading = false;
+                              });
                             }
-                            setState(() {
-                              loading = false;
-                            });
                             rideService.cancelRide();
                           }
                         });
                       } catch (error) {
+                        if (!mounted) return;
+                        
+                        MessageOverlay.angryMessage(
+                            context,
+                            "Payment intent unable to authorize. Please"
+                            " check your payment method and try again.");
+                        
                         if (mounted) {
-                          MessageOverlay.angryMessage(
-                              context,
-                              "Payment intent unable to authorize. Please"
-                              " check your payment method and try again.");
+                          setState(() {
+                            loading = false;
+                          });
                         }
-                        setState(() {
-                          loading = false;
-                        });
                         rideService.cancelRide();
                       }
                     } else {
@@ -391,12 +398,13 @@ class VehiclesScreenState extends State<VehiclesScreen> {
                         Payment.confirmPayment(clientSecret)
                             .then((result) async {
                           if (result['authorized'] as bool) {
-                            if (mounted) {
-                              MessageOverlay.happyMessage(
-                                  context,
-                                  "Payment intent successfully authorized. Please"
-                                  " wait for a driver to accept the ride.");
-                            }
+                            if (!mounted) return;
+                            
+                            MessageOverlay.happyMessage(
+                                context,
+                                "Payment intent successfully authorized. Please"
+                                " wait for a driver to accept the ride.");
+                            
                             Navigator.pop(context);
                             rideService.initializeRideWithoutID();
                             VehicleRideStatusConfirmationScreenState
@@ -416,27 +424,33 @@ class VehiclesScreenState extends State<VehiclesScreen> {
                               "rideId": userService.user.currentRideId,
                             });
                           } else {
-                            if (mounted) {
-                              MessageOverlay.angryMessage(
-                                  context,
-                                  "Payment intent unable to authorize. Please"
-                                  " check your payment method and try again.");
-                            }
-                            setState(() {
-                              loading = false;
-                            });
-                            rideService.cancelRide();
-                          }
-                        }).catchError((error) {
-                          if (mounted) {
+                            if (!mounted) return;
+                            
                             MessageOverlay.angryMessage(
                                 context,
                                 "Payment intent unable to authorize. Please"
                                 " check your payment method and try again.");
+                            
+                            if (mounted) {
+                              setState(() {
+                                loading = false;
+                              });
+                            }
+                            rideService.cancelRide();
                           }
-                          setState(() {
-                            loading = false;
-                          });
+                        }).catchError((error) {
+                          if (!mounted) return;
+                          
+                          MessageOverlay.angryMessage(
+                              context,
+                              "Payment intent unable to authorize. Please"
+                              " check your payment method and try again.");
+                          
+                          if (mounted) {
+                            setState(() {
+                              loading = false;
+                            });
+                          }
                           rideService.cancelRide();
                         });
                       });
