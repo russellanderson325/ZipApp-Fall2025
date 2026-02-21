@@ -2,7 +2,8 @@ import 'dart:async';
 import 'package:geoflutterfire2/geoflutterfire2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:location_permissions/location_permissions.dart';
+//import 'package:location_permissions/location_permissions.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class LocationService {
   static final LocationService _instance = LocationService._internal();
@@ -47,7 +48,7 @@ class LocationService {
 
       // Check and request permissions
       PermissionStatus status =
-          await LocationPermissions().checkPermissionStatus();
+          await Permission.location.status;
 
       if (kDebugMode) {
         print("LocationService: Current permission status: $status");
@@ -58,7 +59,7 @@ class LocationService {
         if (kDebugMode) {
           print("LocationService: Requesting permissions...");
         }
-        status = await LocationPermissions().requestPermissions();
+        status = await Permission.location.status;
         
         if (status == PermissionStatus.denied || 
             status == PermissionStatus.restricted) {
@@ -249,7 +250,7 @@ class LocationService {
       }
 
       PermissionStatus permission = 
-          await LocationPermissions().checkPermissionStatus();
+          await Permission.location.status;
       
       if (kDebugMode) {
         print('LocationService: Permission status: $permission');
