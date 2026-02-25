@@ -1,0 +1,28 @@
+version: 2
+updates:
+  # Flutter/Dart dependencies
+  - package-ecosystem: "pub"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    # Only security updates
+    open-pull-requests-limit: 5
+    allow:
+      - dependency-type: "direct"
+        update-types: ["security"]
+      - dependency-type: "indirect"
+        update-types: ["security"]
+    
+  # Firebase Functions (Node.js)
+  - package-ecosystem: "npm"
+    directory: "/functions"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    # Only security updates
+    allow:
+      - dependency-type: "direct"
+        update-types: ["security"]
+      - dependency-type: "indirect"
+        update-types: ["security"]
