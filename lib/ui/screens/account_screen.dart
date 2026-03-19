@@ -114,20 +114,20 @@ class _AccountScreenState extends State<AccountScreen> {
                                   icon: const Icon(LucideIcons.pencil),
                                   label: const Text('Edit account details'),
                                   style: ButtonStyle(
-                                    shape: MaterialStateProperty.all(
+                                    shape: WidgetStateProperty.all(
                                         RoundedRectangleBorder(
                                             borderRadius:
                                                 BorderRadius.circular(8))),
-                                    padding: MaterialStateProperty.all(
+                                    padding: WidgetStateProperty.all(
                                         const EdgeInsets.all(0)),
                                     iconColor:
-                                        MaterialStateProperty.all(Colors.black),
-                                    iconSize: MaterialStateProperty.all(16),
+                                        WidgetStateProperty.all(Colors.black),
+                                    iconSize: WidgetStateProperty.all(16),
                                     foregroundColor:
-                                        MaterialStateProperty.all(Colors.black),
-                                    backgroundColor: MaterialStateProperty.all(
+                                        WidgetStateProperty.all(Colors.black),
+                                    backgroundColor: WidgetStateProperty.all(
                                         ZipColors.zipYellow),
-                                    textStyle: MaterialStateProperty.all(
+                                    textStyle: WidgetStateProperty.all(
                                         ZipDesign.labelText),
                                   )))
                         ],
@@ -155,14 +155,14 @@ class _AccountScreenState extends State<AccountScreen> {
                             icon: const Icon(LucideIcons.shield),
                             label: const Text('Rules and Safety'),
                             style: ButtonStyle(
-                              padding: MaterialStateProperty.all(
+                              padding: WidgetStateProperty.all(
                                   const EdgeInsets.all(0)),
                               iconColor:
-                                  MaterialStateProperty.all(Colors.black),
-                              iconSize: MaterialStateProperty.all(16),
+                                  WidgetStateProperty.all(Colors.black),
+                              iconSize: WidgetStateProperty.all(16),
                               foregroundColor:
-                                  MaterialStateProperty.all(Colors.black),
-                              textStyle: MaterialStateProperty.all(
+                                  WidgetStateProperty.all(Colors.black),
+                              textStyle: WidgetStateProperty.all(
                                   ZipDesign.labelText),
                             ))),
                     const SizedBox(height: 16),
@@ -179,14 +179,14 @@ class _AccountScreenState extends State<AccountScreen> {
                             icon: const Icon(LucideIcons.book),
                             label: const Text('Terms and Conditions'),
                             style: ButtonStyle(
-                              padding: MaterialStateProperty.all(
+                              padding: WidgetStateProperty.all(
                                   const EdgeInsets.all(0)),
                               iconColor:
-                                  MaterialStateProperty.all(Colors.black),
-                              iconSize: MaterialStateProperty.all(16),
+                                  WidgetStateProperty.all(Colors.black),
+                              iconSize: WidgetStateProperty.all(16),
                               foregroundColor:
-                                  MaterialStateProperty.all(Colors.black),
-                              textStyle: MaterialStateProperty.all(
+                                  WidgetStateProperty.all(Colors.black),
+                              textStyle: WidgetStateProperty.all(
                                   ZipDesign.labelText),
                             ))),
                     const SizedBox(height: 16),
@@ -204,14 +204,14 @@ class _AccountScreenState extends State<AccountScreen> {
                             icon: const Icon(LucideIcons.lock),
                             label: const Text('Privacy Policy'),
                             style: ButtonStyle(
-                              padding: MaterialStateProperty.all(
+                              padding: WidgetStateProperty.all(
                                   const EdgeInsets.all(0)),
                               iconColor:
-                                  MaterialStateProperty.all(Colors.black),
-                              iconSize: MaterialStateProperty.all(16),
+                                  WidgetStateProperty.all(Colors.black),
+                              iconSize: WidgetStateProperty.all(16),
                               foregroundColor:
-                                  MaterialStateProperty.all(Colors.black),
-                              textStyle: MaterialStateProperty.all(
+                                  WidgetStateProperty.all(Colors.black),
+                              textStyle: WidgetStateProperty.all(
                                   ZipDesign.labelText),
                             ))),
                     const SizedBox(height: 16),
@@ -228,14 +228,14 @@ class _AccountScreenState extends State<AccountScreen> {
                             icon: const Icon(LucideIcons.badgeHelp),
                             label: const Text('Help Center'),
                             style: ButtonStyle(
-                              padding: MaterialStateProperty.all(
+                              padding: WidgetStateProperty.all(
                                   const EdgeInsets.all(0)),
                               iconColor:
-                                  MaterialStateProperty.all(Colors.black),
-                              iconSize: MaterialStateProperty.all(16),
+                                  WidgetStateProperty.all(Colors.black),
+                              iconSize: WidgetStateProperty.all(16),
                               foregroundColor:
-                                  MaterialStateProperty.all(Colors.black),
-                              textStyle: MaterialStateProperty.all(
+                                  WidgetStateProperty.all(Colors.black),
+                              textStyle: WidgetStateProperty.all(
                                   ZipDesign.labelText),
                             ))),
                     const SizedBox(height: 16),
@@ -248,14 +248,14 @@ class _AccountScreenState extends State<AccountScreen> {
                             icon: const Icon(LucideIcons.logOut),
                             label: const Text('Logout'),
                             style: ButtonStyle(
-                              padding: MaterialStateProperty.all(
+                              padding: WidgetStateProperty.all(
                                   const EdgeInsets.all(0)),
                               iconColor:
-                                  MaterialStateProperty.all(Colors.black),
-                              iconSize: MaterialStateProperty.all(16),
+                                  WidgetStateProperty.all(Colors.black),
+                              iconSize: WidgetStateProperty.all(16),
                               foregroundColor:
-                                  MaterialStateProperty.all(Colors.black),
-                              textStyle: MaterialStateProperty.all(
+                                  WidgetStateProperty.all(Colors.black),
+                              textStyle: WidgetStateProperty.all(
                                   ZipDesign.labelText),
                             ))),
                   ]))
@@ -310,11 +310,11 @@ class _AccountScreenState extends State<AccountScreen> {
                 ? 'Login as Driver'
                 : 'Become a Driver'),
         style: ButtonStyle(
-          padding: MaterialStateProperty.all(const EdgeInsets.all(0)),
-          iconColor: MaterialStateProperty.all(Colors.black),
-          iconSize: MaterialStateProperty.all(16),
-          foregroundColor: MaterialStateProperty.all(Colors.black),
-          textStyle: MaterialStateProperty.all(ZipDesign.labelText),
+          padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
+          iconColor: WidgetStateProperty.all(Colors.black),
+          iconSize: WidgetStateProperty.all(16),
+          foregroundColor: WidgetStateProperty.all(Colors.black),
+          textStyle: WidgetStateProperty.all(ZipDesign.labelText),
         ),
       ),
     );

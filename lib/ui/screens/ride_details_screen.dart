@@ -307,15 +307,15 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
           child: TextButton(
             onPressed: showDrawer,
             style: ButtonStyle(
-              fixedSize: MaterialStateProperty.all(const Size(64, 23)),
-              padding: MaterialStateProperty.all(const EdgeInsets.all(0)),
-              shape: MaterialStateProperty.all(
+              fixedSize: WidgetStateProperty.all(const Size(64, 23)),
+              padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
+              shape: WidgetStateProperty.all(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
               backgroundColor:
-                  MaterialStateProperty.all(TailwindColors.gray200),
+                  WidgetStateProperty.all(TailwindColors.gray200),
             ),
             child: Text(
               buttonTitle,
@@ -354,15 +354,15 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
           child: TextButton(
             onPressed: showDrawer,
             style: ButtonStyle(
-              fixedSize: MaterialStateProperty.all(const Size(64, 23)),
-              padding: MaterialStateProperty.all(const EdgeInsets.all(0)),
-              shape: MaterialStateProperty.all(
+              fixedSize: WidgetStateProperty.all(const Size(64, 23)),
+              padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
+              shape: WidgetStateProperty.all(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
               backgroundColor:
-                  MaterialStateProperty.all(TailwindColors.gray200),
+                  WidgetStateProperty.all(TailwindColors.gray200),
             ),
             child: Text(
               buttonTitle,

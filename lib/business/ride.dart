@@ -47,7 +47,7 @@ class RideService {
     return _instance;
   }
 
-  setupService() async {
+  Future<void> setupService() async {
     rideStream = rideReference
         .snapshots()
         .map((snapshot) => Ride.fromDocument(snapshot))
@@ -426,7 +426,7 @@ class RideService {
     }
   }
 
-  _getDriverReference(String driverID) {
+  DocumentReference<Map<String, dynamic>> _getDriverReference(String driverID) {
     return _firestore.collection('drivers').doc(driverID);
   }
 

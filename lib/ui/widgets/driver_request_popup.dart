@@ -11,10 +11,10 @@ class RideRequestPopup extends StatefulWidget {
   final VoidCallback onDismiss;
 
   const RideRequestPopup({
-    Key? key,
+    super.key,
     required this.request,
     required this.onDismiss,
-  }) : super(key: key);
+  });
 
   @override
   State<RideRequestPopup> createState() => _RideRequestPopupState();
