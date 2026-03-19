@@ -1,5 +1,6 @@
 const functions = require("firebase-functions");
-const stripe = require("stripe")(functions.config().stripe.secret);
+const secretKey = functions.config().stripe.secret
+const stripe = require("stripe")(secretKey);
 
 const createPayout = functions.https.onCall(async (data, context) => {
     if (!context.auth) {

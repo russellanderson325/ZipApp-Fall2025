@@ -32,38 +32,38 @@ class _RootScreenState extends State<RootScreen> {
     );
   }
 
-@override
-Widget build(BuildContext context) {
-  return StreamBuilder<auth.User?>(
-    stream: auth.FirebaseAuth.instance.authStateChanges(),
-    builder: (BuildContext context, snapshot) {
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return Container(
-          color: Colors.white,
-        );
-      } else {
-        if (snapshot.hasData) {
-          switch (loading) {
-            case LoadingState.none:
-              _initializeServices(snapshot.data!.uid).whenComplete(() {
-                setState(() {
-                  loading = LoadingState.done;
-                });
-              });
-              loading = LoadingState.loading;
-              return _buildWaitingScreen();
-            case LoadingState.loading:
-              return _buildWaitingScreen();
-            case LoadingState.done:
-              return const RiderMainScreen();
-          }
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<auth.User?>(
+      stream: auth.FirebaseAuth.instance.authStateChanges(),
+      builder: (BuildContext context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            color: Colors.white,
+          );
         } else {
-          return const WelcomeScreen();
+          if (snapshot.hasData) {
+            switch (loading) {
+              case LoadingState.none:
+                _initializeServices(snapshot.data!.uid).whenComplete(() {
+                  setState(() {
+                    loading = LoadingState.done;
+                  });
+                });
+                loading = LoadingState.loading;
+                return _buildWaitingScreen();
+              case LoadingState.loading:
+                return _buildWaitingScreen();
+              case LoadingState.done:
+                return const RiderMainScreen();
+            }
+          } else {
+            return const WelcomeScreen();
+          }
         }
-      }
-    },
-  );
-}
+      },
+    );
+  }
 
   Future<bool> _initializeServices(String uid) async {
     UserService userService = UserService();

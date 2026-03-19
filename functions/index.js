@@ -18,6 +18,10 @@ const {emailHelpCenter} = require("./emailHelpCenter");
 const createDriverAccount = require("./stripe_functions/DriverBankAccountOnboarding"); 
 const createPayout= require("./stripe_functions/createPayout"); 
 const createStripeCustomer = require("./stripe_functions/createStripeCustomer");
+const initiateFareSplit = require("./stripe_functions/splitFareFunctions")
+const respondToSplitRequest = require("./stripe_functions/splitFareFunctions")
+const handleExpiredSplitRequests = require("./stripe_functions/splitFareFunctions")
+
 
 // Export the functions
 exports.getPaymentMethodDetails = getPaymentMethodDetails;
@@ -34,4 +38,7 @@ exports.emailHelpCenter = emailHelpCenter;
 exports.createDriverAccount = createDriverAccount; 
 exports.createPayout = createPayout; 
 exports.createStripeCustomer = createStripeCustomer;
+exports.initiateFareSplit = initiateFareSplit;
+exports.respondToSplitRequest = respondToSplitRequest;
+exports.handleExpiredSplitRequests = handleExpiredSplitRequests;
 
