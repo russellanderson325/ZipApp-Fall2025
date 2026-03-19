@@ -451,9 +451,9 @@ class _DriverPortalState extends State<DriverPortal> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 2.0),
         child: DottedBorder(
-          options: RoundedRectDottedBorderOptions(
+          options: const RoundedRectDottedBorderOptions(
             radius: Radius.circular(8.0),
-            dashPattern: const [10, 10],
+            dashPattern: [10, 10],
             strokeWidth: 1.0,
             color: TailwindColors.gray300,
           ),
@@ -488,9 +488,9 @@ class _DriverPortalState extends State<DriverPortal> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 2.0),
         child: DottedBorder(
-          options: RoundedRectDottedBorderOptions(
+          options: const RoundedRectDottedBorderOptions(
             radius: Radius.circular(8.0),
-            dashPattern: const [10, 10],
+            dashPattern: [10, 10],
             strokeWidth: 1.0,
             color: TailwindColors.gray300,
           ),

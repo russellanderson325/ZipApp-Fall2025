@@ -231,7 +231,7 @@ class DefaultTipScreenState extends State<DefaultTipScreen> {
               ? ZipDesign.yellowButtonStyle
               : ZipDesign.yellowButtonStyle.copyWith(
                   backgroundColor:
-                      MaterialStateProperty.all(TailwindColors.gray300),
+                      WidgetStateProperty.all(TailwindColors.gray300),
                 ),
           child: Text(
             'Save Changes',

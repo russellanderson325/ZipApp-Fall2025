@@ -70,9 +70,9 @@ class _RideActivityItemState extends State<RideActivityItem> {
                 );
               },
               style: ButtonStyle(
-                padding: MaterialStateProperty.all(const EdgeInsets.all(0)),
-                foregroundColor: MaterialStateProperty.all(Colors.black),
-                textStyle: MaterialStateProperty.all(ZipDesign.labelText),
+                padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
+                foregroundColor: WidgetStateProperty.all(Colors.black),
+                textStyle: WidgetStateProperty.all(ZipDesign.labelText),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

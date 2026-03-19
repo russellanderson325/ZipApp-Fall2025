@@ -22,7 +22,7 @@ class AuthService {
     try {
       GoogleSignInAccount? googleSignInAccount = await _googleSignIn.authenticate(scopeHint: ['email']);
       GoogleSignInAuthentication googleAuth =
-          googleSignInAccount!.authentication;
+          googleSignInAccount.authentication;
 
       final authClient = _googleSignIn.authorizationClient;
       final authorization = await authClient.authorizationForScopes(['email']);
