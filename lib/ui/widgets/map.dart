@@ -40,7 +40,7 @@ class MapWidgetSampleState extends State<MapWidget> {
   LatLng? userLatLng, searchLatLng;
   final markers = <Marker>[];
   final polylines = <Polyline>[];
-  PolylinePoints polylinePoints = PolylinePoints(apiKey: Keys.map);
+  PolylinePoints polylinePoints = PolylinePoints();
   DriverService driverService = DriverService();
   Map<String, bool> driverStates = {
     'isWorking': false,
@@ -411,18 +411,18 @@ class MapWidgetSampleState extends State<MapWidget> {
                           ? const Text('Resume driving')
                           : const Text('Start break'),
                       style: ButtonStyle(
-                        shape: WidgetStateProperty.all(RoundedRectangleBorder(
+                        shape: MaterialStateProperty.all(RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8))),
                         padding:
-                            WidgetStateProperty.all(const EdgeInsets.all(0)),
-                        iconColor: WidgetStateProperty.all(Colors.black),
-                        iconSize: WidgetStateProperty.all(16),
+                            MaterialStateProperty.all(const EdgeInsets.all(0)),
+                        iconColor: MaterialStateProperty.all(Colors.black),
+                        iconSize: MaterialStateProperty.all(16),
                         foregroundColor:
-                            WidgetStateProperty.all(Colors.black),
+                            MaterialStateProperty.all(Colors.black),
                         backgroundColor:
-                            WidgetStateProperty.all(ZipColors.zipYellow),
+                            MaterialStateProperty.all(ZipColors.zipYellow),
                         textStyle:
-                            WidgetStateProperty.all(ZipDesign.labelText),
+                            MaterialStateProperty.all(ZipDesign.labelText),
                       ),
                     ),
                   ),
@@ -433,18 +433,18 @@ class MapWidgetSampleState extends State<MapWidget> {
                       icon: const Icon(LucideIcons.logOut),
                       label: const Text('Clock out'),
                       style: ButtonStyle(
-                        shape: WidgetStateProperty.all(RoundedRectangleBorder(
+                        shape: MaterialStateProperty.all(RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8))),
                         padding:
-                            WidgetStateProperty.all(const EdgeInsets.all(0)),
-                        iconColor: WidgetStateProperty.all(Colors.black),
-                        iconSize: WidgetStateProperty.all(16),
+                            MaterialStateProperty.all(const EdgeInsets.all(0)),
+                        iconColor: MaterialStateProperty.all(Colors.black),
+                        iconSize: MaterialStateProperty.all(16),
                         foregroundColor:
-                            WidgetStateProperty.all(Colors.black),
+                            MaterialStateProperty.all(Colors.black),
                         backgroundColor:
-                            WidgetStateProperty.all(ZipColors.zipYellow),
+                            MaterialStateProperty.all(ZipColors.zipYellow),
                         textStyle:
-                            WidgetStateProperty.all(ZipDesign.labelText),
+                            MaterialStateProperty.all(ZipDesign.labelText),
                       ),
                     ),
                   ),
@@ -455,15 +455,15 @@ class MapWidgetSampleState extends State<MapWidget> {
                 icon: const Icon(LucideIcons.logIn),
                 label: const Text('Clock in as a driver'),
                 style: ButtonStyle(
-                  shape: WidgetStateProperty.all(RoundedRectangleBorder(
+                  shape: MaterialStateProperty.all(RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8))),
-                  padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
-                  iconColor: WidgetStateProperty.all(Colors.black),
-                  iconSize: WidgetStateProperty.all(16),
-                  foregroundColor: WidgetStateProperty.all(Colors.black),
+                  padding: MaterialStateProperty.all(const EdgeInsets.all(0)),
+                  iconColor: MaterialStateProperty.all(Colors.black),
+                  iconSize: MaterialStateProperty.all(16),
+                  foregroundColor: MaterialStateProperty.all(Colors.black),
                   backgroundColor:
-                      WidgetStateProperty.all(ZipColors.zipYellow),
-                  textStyle: WidgetStateProperty.all(ZipDesign.labelText),
+                      MaterialStateProperty.all(ZipColors.zipYellow),
+                  textStyle: MaterialStateProperty.all(ZipDesign.labelText),
                 ),
               ),
       ),
@@ -671,7 +671,7 @@ class MapWidgetSampleState extends State<MapWidget> {
 
       PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
         request: polylineRequest,
-        //googleApiKey: Keys.map,
+        googleApiKey: Keys.map,
       );
 
       if (result.points.isNotEmpty) {

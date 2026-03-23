@@ -37,35 +37,35 @@ class ZipDesign {
   );
   // ButtonStyles
   static final ButtonStyle yellowButtonStyle = ButtonStyle(
-    shape: WidgetStateProperty.all(
+    shape: MaterialStateProperty.all(
         RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-    padding: WidgetStateProperty.all(const EdgeInsets.all(10)),
-    iconColor: WidgetStateProperty.all(Colors.black),
-    iconSize: WidgetStateProperty.all(16),
-    foregroundColor: WidgetStateProperty.all(Colors.black),
-    backgroundColor: WidgetStateProperty.all(ZipColors.zipYellow),
-    textStyle: WidgetStateProperty.all(ZipDesign.labelText),
+    padding: MaterialStateProperty.all(const EdgeInsets.all(10)),
+    iconColor: MaterialStateProperty.all(Colors.black),
+    iconSize: MaterialStateProperty.all(16),
+    foregroundColor: MaterialStateProperty.all(Colors.black),
+    backgroundColor: MaterialStateProperty.all(ZipColors.zipYellow),
+    textStyle: MaterialStateProperty.all(ZipDesign.labelText),
   );
   static final ButtonStyle disabledYellowButtonStyle = ButtonStyle(
-    shape: WidgetStateProperty.all(
+    shape: MaterialStateProperty.all(
         RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-    padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
-    iconColor: WidgetStateProperty.all(Colors.black),
-    iconSize: WidgetStateProperty.all(16),
-    foregroundColor: WidgetStateProperty.all(Colors.black),
-    backgroundColor: WidgetStateProperty.all(TailwindColors.gray300),
-    textStyle: WidgetStateProperty.all(ZipDesign.labelText),
+    padding: MaterialStateProperty.all(const EdgeInsets.all(0)),
+    iconColor: MaterialStateProperty.all(Colors.black),
+    iconSize: MaterialStateProperty.all(16),
+    foregroundColor: MaterialStateProperty.all(Colors.black),
+    backgroundColor: MaterialStateProperty.all(TailwindColors.gray300),
+    textStyle: MaterialStateProperty.all(ZipDesign.labelText),
   );
   static final ButtonStyle redButtonStyle = ButtonStyle(
-    shape: WidgetStateProperty.all(
+    shape: MaterialStateProperty.all(
         RoundedRectangleBorder(borderRadius: BorderRadius.circular(32))),
-    padding: WidgetStateProperty.all(const EdgeInsets.all(15)),
-    iconColor: WidgetStateProperty.all(Colors.black),
-    iconSize: WidgetStateProperty.all(16),
+    padding: MaterialStateProperty.all(const EdgeInsets.all(15)),
+    iconColor: MaterialStateProperty.all(Colors.black),
+    iconSize: MaterialStateProperty.all(16),
     foregroundColor:
-        WidgetStateProperty.all(const Color.fromARGB(255, 255, 255, 255)),
+        MaterialStateProperty.all(const Color.fromARGB(255, 255, 255, 255)),
     backgroundColor:
-        WidgetStateProperty.all(const Color.fromARGB(255, 0, 0, 0)),
-    textStyle: WidgetStateProperty.all(ZipDesign.labelText),
+        MaterialStateProperty.all(const Color.fromARGB(255, 0, 0, 0)),
+    textStyle: MaterialStateProperty.all(ZipDesign.labelText),
   );
 }

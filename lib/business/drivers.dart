@@ -670,7 +670,7 @@ class DriverService {
     return nearbyDrivers;
   }
 
-  Future<void> _updateDriverRecord() async {
+  _updateDriverRecord() async {
     DocumentSnapshot myDriverRef = await driverReference.get();
 
     logger.info('DRIVER: Updating driver record for ${userService.userID}');

@@ -135,12 +135,12 @@ class PaymentsScreenState extends State<PaymentsScreen> {
                           setState(() {});
                         },
                         style: ButtonStyle(
-                          padding: WidgetStateProperty.all(
+                          padding: MaterialStateProperty.all(
                               const EdgeInsets.all(0)),
                           foregroundColor:
-                              WidgetStateProperty.all(Colors.black),
+                              MaterialStateProperty.all(Colors.black),
                           textStyle:
-                              WidgetStateProperty.all(ZipDesign.labelText),
+                              MaterialStateProperty.all(ZipDesign.labelText),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
