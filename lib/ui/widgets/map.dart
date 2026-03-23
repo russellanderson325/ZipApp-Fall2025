@@ -183,9 +183,8 @@ class MapWidgetSampleState extends State<MapWidget> {
         return driverBox(MediaQuery.of(context).size.width, 68);
       }
     } else {
-      return userService.isRiding()
-          ? currentRide(MediaQuery.of(context).size.width, 68)
-          : searchBox(MediaQuery.of(context).size.width, 68);
+      // TEMP TESTING BLOCK: always show currentRide for rider flow
+      return currentRide(MediaQuery.of(context).size.width, 68);
     }
   }
 
