@@ -19,10 +19,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zipapp/models/primary_payment_method.dart';
 import 'package:zipapp/logger.dart';
 
-
 class Payment {
   static final AppLogger logger = AppLogger();
-  static final _firebaseUser = auth.FirebaseAuth.instance.currentUser;
+  static auth.User? get _firebaseUser => auth.FirebaseAuth.instance.currentUser;
   static final FirebaseFunctions functions = FirebaseFunctions.instance;
   static PrimaryPaymentMethod primaryPaymentMethodStatic = PrimaryPaymentMethod(
     applePay: false,
@@ -413,6 +412,7 @@ class Payment {
 
     var documentSnapshot = await stripeCustomer.get();
     var customerId = documentSnapshot.data()?['customer_id'];
+    logger.info('UID: ${_firebaseUser?.uid} | customerId: $customerId');
 
     // Initialize the payment sheets for iOS and Andriod
     await Stripe.instance.initPaymentSheet(
@@ -601,17 +601,27 @@ class Payment {
   */
   static Future<Map<String, dynamic>?> getPaymentMethodById(
       String paymentMethodId) async {
-    final results = await getPaymentMethodDetailsCallable
-        .call({'paymentMethodId': paymentMethodId});
+    try {
+      final results = await getPaymentMethodDetailsCallable
+          .call({'paymentMethodId': paymentMethodId});
 
-    if (!results.data['success']) {
-      throw Exception('Error getting payment method details');
+      if (!results.data['success']) {
+        logger.error('getPaymentMethodById failed: ${results.data}');
+        return null;
+      }
+
+      Map<String, dynamic> response =
+          Map<String, dynamic>.from(results.data['response']);
+      response['id'] = paymentMethodId;
+      return response;
+    } on FirebaseFunctionsException catch (e) {
+      logger.error(
+          'getPaymentMethodById error: ${e.message} | details: ${e.details}');
+      return null;
+    } catch (e) {
+      logger.error('getPaymentMethodById unexpected error: $e');
+      return null;
     }
-
-    Map<String, dynamic> response =
-        Map<String, dynamic>.from(results.data['response']);
-    response['id'] = paymentMethodId;
-    return response;
   }
 
   /*

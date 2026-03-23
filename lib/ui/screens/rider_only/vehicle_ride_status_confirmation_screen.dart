@@ -34,6 +34,7 @@ class VehicleRideStatusConfirmationScreenState
   bool _isMounted = false;
   String status = "";
   StreamSubscription<Ride>? _rideSubscription;
+  Ride? _latestRide;
 
   @override
   void initState() {
@@ -42,8 +43,9 @@ class VehicleRideStatusConfirmationScreenState
     statusMessage = "";
     ride = widget.ride;
 
-    _rideSubscription = ride?.getRideStream().listen((ride) {
-      statusUpdate(ride.status);
+    _rideSubscription = ride?.getRideStream().listen((rideDoc) {
+      _latestRide = rideDoc;
+      statusUpdate(rideDoc.status);
     });
   }
 
@@ -73,11 +75,96 @@ class VehicleRideStatusConfirmationScreenState
           padding: const EdgeInsets.only(left: 24, right: 24),
           child: ListView(
             children: <Widget>[
-              Center(
-                child: Text(statusMessage),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: ZipColors.boxBorder),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Ride Status",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      statusMessage.isNotEmpty ? statusMessage : "Waiting for ride updates...",
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Driver",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      (_latestRide?.driverName != null && _latestRide!.driverName.isNotEmpty)
+                          ? _latestRide!.driverName
+                          : "Driver not assigned yet",
+                      style: const TextStyle(fontSize: 18),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Trip Progress",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      status == "INITIALIZING" || status == "WAITING"
+                          ? "Looking for and connecting to a driver."
+                          : status == "IN_PROGRESS"
+                              ? "Your driver is connected and your ride is active."
+                              : status == "ENDED"
+                                  ? "Ride completed successfully."
+                                  : status == "CANCELED"
+                                      ? "Ride was canceled."
+                                      : "Ride information unavailable.",
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 260),
-              TextButton.icon(
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                height: 180,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  border: Border.all(color: ZipColors.boxBorder),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Center(
+                  child: Text(
+                    "Map placeholder for Active Rider screen",
+                    style: TextStyle(fontSize: 16, color: Colors.black54),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
                   onPressed: () {
                     if (status != "CANCELED") {
                       ride?.cancelRide();
@@ -85,11 +172,15 @@ class VehicleRideStatusConfirmationScreenState
                       Navigator.pop(context);
                     }
                   },
-                  icon: const Icon(LucideIcons.trash),
                   style: ZipDesign.redButtonStyle,
-                  label: Text((status != "CANCELED" || status == "ENDED")
-                      ? 'Cancel Ride'
-                      : 'Close')),
+                  child: Text(
+                    (status != "CANCELED" || status == "ENDED")
+                        ? 'Cancel Ride'
+                        : 'Close',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
               const SizedBox(height: 5),
               // const Center(
               //   child: Text(

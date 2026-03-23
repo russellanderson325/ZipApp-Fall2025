@@ -15,6 +15,7 @@ import 'package:zipapp/models/rides.dart';
 import 'package:zipapp/services/payment.dart';
 import 'package:intl/intl.dart';
 import 'package:zipapp/logger.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 
 class DriverService {
   final logger = AppLogger();
@@ -717,16 +718,78 @@ class DriverService {
    * @return Future<Map<String, dynamic>> The result of the clock in operation
    */
   Future<Map<String, dynamic>> clockIn() async {
-    HttpsCallableResult result = await driverClockInFunction
-        .call(<String, dynamic>{
-      'daysOfWeek': driver.daysOfWeek,
-      'driveruid': driver.uid,
-      'shiftuid': shiftuid
-    });
-    String response = result.data['response'];
-    bool success = result.data['success'];
+    try {
+      logger.info('DRIVER: clockIn start');
 
-    return {'success': success, 'response': response};
+      final DocumentSnapshot driverDoc = await driverReference.get();
+
+      if (!driverDoc.exists || driverDoc.data() == null) {
+        logger.error('DRIVER: clockIn failed - driver document not found');
+        return {
+          'success': false,
+          'response': 'Driver profile not found.',
+        };
+      }
+
+      final data = driverDoc.data() as Map<String, dynamic>;
+
+      final String driveruid =
+          (data['uid'] ?? auth.FirebaseAuth.instance.currentUser?.uid ?? '')
+              .toString();
+
+      final dynamic rawDays = data['daysOfWeek'];
+
+      List<int> daysOfWeek = [];
+
+      if (rawDays is List) {
+        daysOfWeek = rawDays
+            .map((e) => int.tryParse(e.toString()))
+            .where((e) => e != null)
+            .cast<int>()
+            .toList();
+      } else if (rawDays is String) {
+        daysOfWeek = rawDays
+            .split(',')
+            .map((e) => int.tryParse(e.trim()))
+            .where((e) => e != null)
+            .cast<int>()
+            .toList();
+      }
+
+      logger.info(
+        'DRIVER: clockIn using uid=$driveruid | daysOfWeek=$daysOfWeek | shiftuid=$shiftuid',
+      );
+      logger.info('DRIVER: today weekday check = ${DateTime.now().weekday}');
+
+      if (driveruid.isEmpty) {
+        return {
+          'success': false,
+          'response': 'Driver uid is missing.',
+        };
+      }
+
+      HttpsCallableResult result = await driverClockInFunction.call(
+        <String, dynamic>{
+          'daysOfWeek': daysOfWeek,
+          'driveruid': driveruid,
+          'shiftuid': shiftuid,
+        },
+      );
+
+      logger.info('DRIVER: clockIn raw result = ${result.data}');
+
+      final String response =
+          (result.data['response'] ?? 'No response').toString();
+      final bool success = result.data['success'] == true;
+
+      return {'success': success, 'response': response};
+    } catch (e) {
+      logger.error('DRIVER: clockIn exception: $e');
+      return {
+        'success': false,
+        'response': 'Clock in exception: $e',
+      };
+    }
   }
 
   /*
@@ -734,12 +797,55 @@ class DriverService {
    * @return Future<Map<String, dynamic>> The result of the clock out operation
    */
   Future<Map<String, dynamic>> clockOut() async {
-    HttpsCallableResult result = await driverClockOutFunction
-        .call(<String, dynamic>{'driveruid': driver.uid, 'shiftuid': shiftuid});
-    String response = (result.data['response']).toString();
-    bool success = result.data['success'];
+    try {
+      logger.info('DRIVER: clockOut start');
 
-    return {'success': success, 'response': response};
+      final DocumentSnapshot driverDoc = await driverReference.get();
+
+      if (!driverDoc.exists || driverDoc.data() == null) {
+        logger.error('DRIVER: clockOut failed - driver document not found');
+        return {
+          'success': false,
+          'response': 'Driver profile not found.',
+        };
+      }
+
+      final data = driverDoc.data() as Map<String, dynamic>;
+
+      final String driveruid =
+          (data['uid'] ?? auth.FirebaseAuth.instance.currentUser?.uid ?? '')
+              .toString();
+
+      logger.info('DRIVER: clockOut using uid=$driveruid');
+
+      if (driveruid.isEmpty) {
+        return {
+          'success': false,
+          'response': 'Driver uid is missing.',
+        };
+      }
+
+      HttpsCallableResult result = await driverClockOutFunction.call(
+        <String, dynamic>{
+          'driveruid': driveruid,
+          'shiftuid': shiftuid,
+        },
+      );
+
+      logger.info('DRIVER: clockOut raw result = ${result.data}');
+
+      final String response =
+          (result.data['response'] ?? 'No response').toString();
+      final bool success = result.data['success'] == true;
+
+      return {'success': success, 'response': response};
+    } catch (e) {
+      logger.error('DRIVER: clockOut exception: $e');
+      return {
+        'success': false,
+        'response': 'Clock out exception: $e',
+      };
+    }
   }
 
   /*
@@ -747,12 +853,55 @@ class DriverService {
    * @return Future<Map<String, dynamic>> The result of the start break operation
    */
   Future<Map<String, dynamic>> startBreak() async {
-    HttpsCallableResult result = await driverStartBreakFunction
-        .call(<String, dynamic>{'driveruid': driver.uid, 'shiftuid': shiftuid});
-    String response = (result.data['response']).toString();
-    bool success = result.data['success'];
+    try {
+      logger.info('DRIVER: startBreak start');
 
-    return {'response': response, 'success': success};
+      final DocumentSnapshot driverDoc = await driverReference.get();
+
+      if (!driverDoc.exists || driverDoc.data() == null) {
+        logger.error('DRIVER: startBreak failed - driver document not found');
+        return {
+          'success': false,
+          'response': 'Driver profile not found.',
+        };
+      }
+
+      final data = driverDoc.data() as Map<String, dynamic>;
+
+      final String driveruid =
+          (data['uid'] ?? auth.FirebaseAuth.instance.currentUser?.uid ?? '')
+              .toString();
+
+      logger.info('DRIVER: startBreak using uid=$driveruid shiftuid=$shiftuid');
+
+      if (driveruid.isEmpty) {
+        return {
+          'success': false,
+          'response': 'Driver uid is missing.',
+        };
+      }
+
+      HttpsCallableResult result = await driverStartBreakFunction.call(
+        <String, dynamic>{
+          'driveruid': driveruid,
+          'shiftuid': shiftuid,
+        },
+      );
+
+      logger.info('DRIVER: startBreak raw result = ${result.data}');
+
+      final String response =
+          (result.data['response'] ?? 'No response').toString();
+      final bool success = result.data['success'] == true;
+
+      return {'success': success, 'response': response};
+    } catch (e) {
+      logger.error('DRIVER: startBreak exception: $e');
+      return {
+        'success': false,
+        'response': 'Start break exception: $e',
+      };
+    }
   }
 
   /*
