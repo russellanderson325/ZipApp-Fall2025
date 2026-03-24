@@ -20,7 +20,8 @@ class AuthService {
 
   Future<auth.User?> googleSignIn() async {
     try {
-      GoogleSignInAccount? googleSignInAccount = await _googleSignIn.authenticate(scopeHint: ['email']);
+      GoogleSignInAccount? googleSignInAccount =
+          await _googleSignIn.authenticate(scopeHint: ['email']);
       GoogleSignInAuthentication googleAuth =
           googleSignInAccount.authentication;
 
@@ -104,11 +105,8 @@ class AuthService {
 
   Future<void> addUser(User user) async {
     DocumentSnapshot doc = await _db.collection('users').doc(user.uid).get();
-    if (doc.exists) {
-      // print("user ${user.firstName} ${user.email} already exists");
-    } else {
-      // print("user ${user.firstName} ${user.email} added");
-      _db.doc("users/${user.uid}").set(user.toJson());
+    if (!doc.exists) {
+      await _db.doc("users/${user.uid}").set(user.toJson());
     }
   }
 

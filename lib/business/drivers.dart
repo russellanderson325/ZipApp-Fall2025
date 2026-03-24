@@ -15,6 +15,7 @@ import 'package:zipapp/models/rides.dart';
 import 'package:zipapp/services/payment.dart';
 import 'package:intl/intl.dart';
 import 'package:zipapp/logger.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 
 class DriverService {
   final logger = AppLogger();
@@ -36,6 +37,7 @@ class DriverService {
   late Driver driver;
   late CurrentShift currentShift;
   StreamSubscription<Driver>? driverSub;
+
   // Request specific variables
   late CollectionReference requestCollection;
   late Stream<List<Request>> requestStream;
@@ -43,16 +45,18 @@ class DriverService {
   late List<Request> currentRequests = [];
   Request? currentRequest;
   bool _isCurrentRideInitialized = false;
-  // Ride specific varaibles
+
+  // Ride specific variables
   late Stream<Ride> rideStream;
   StreamSubscription<Ride>? rideSub;
   late Ride currentRide;
-  //Shift specific variables
+
+  // Shift specific variables
   late String shiftuid;
   int requestLength = 0;
   bool isDriving = false;
 
-  //  Timer and tracking for auto-decline
+  // Timer and tracking for auto-decline
   Timer? _autoDeclineTimer;
   String? _currentRequestId;
 
@@ -60,33 +64,29 @@ class DriverService {
   Function(Request)? onRequestReceived;
   Function(String)? onRequestTimeout;
 
-  // Function? uiCallbackFunction;
-
   HttpsCallable driverClockInFunction =
-      FirebaseFunctions.instance.httpsCallable(
+  FirebaseFunctions.instance.httpsCallable(
     'driverClockIn',
   );
 
   HttpsCallable driverClockOutFunction =
-      FirebaseFunctions.instance.httpsCallable(
+  FirebaseFunctions.instance.httpsCallable(
     'driverClockOut',
   );
 
   HttpsCallable driverStartBreakFunction =
-      FirebaseFunctions.instance.httpsCallable(
+  FirebaseFunctions.instance.httpsCallable(
     'driverStartBreak',
   );
 
   HttpsCallable driverEndBreakFunction =
-      FirebaseFunctions.instance.httpsCallable(
+  FirebaseFunctions.instance.httpsCallable(
     'driverEndBreak',
   );
 
   factory DriverService() {
     return _instance;
   }
-
-  // TODO: Update to use user.isDriver before initializing since only driver users will need the service.
 
   DriverService._internal() {
     driversCollection = _firestore.collection('drivers');
@@ -96,13 +96,35 @@ class DriverService {
     shiftuid = DateFormat('MMddyyyy').format(DateTime.now());
   }
 
+  void _refreshReferences() {
+    driversCollection = _firestore.collection('drivers');
+    driverReference = driversCollection.doc(userService.userID);
+    requestCollection = driverReference.collection('requests');
+    shiftCollection = driverReference.collection('shifts');
+    shiftReference = shiftCollection.doc(shiftuid);
+
+    logger.info('DRIVER: Refreshed references');
+    logger.info('  - userService.userID: ${userService.userID}');
+    logger.info('  - driver path: drivers/${userService.userID}');
+    logger.info('  - request path: drivers/${userService.userID}/requests');
+    logger.info('  - shift path: drivers/${userService.userID}/shifts/$shiftuid');
+  }
+
   /*
    * Setup the driver service, this will setup the driver service and listen for requests.
    * @return Future<bool> True if the driver service was setup successfully, false otherwise
    */
   Future<bool> setupService() async {
     logger.info('DRIVER: ===== SETTING UP DRIVER SERVICE =====');
+
+    _refreshReferences();
+
     await _updateDriverRecord();
+
+    if (driverSub != null) {
+      await driverSub?.cancel();
+      driverSub = null;
+    }
 
     logger.info('DRIVER: Setting up document listener');
     driverSub = driverReference
@@ -160,7 +182,9 @@ class DriverService {
   void setupRideStream(String rideId) {
     if (rideSub != null) {
       rideSub?.cancel();
+      rideSub = null;
     }
+
     DocumentReference rideRef = _firestore.collection('rides').doc(rideId);
     rideStream =
         rideRef.snapshots().map((snapshot) => Ride.fromDocument(snapshot));
@@ -197,7 +221,6 @@ class DriverService {
   void _updatePosition(Position pos) {
     if (driver.isWorking) {
       myLocation = geo.point(latitude: pos.latitude, longitude: pos.longitude);
-      // TODO: Check for splitting driver and position into seperate documents in firebase as an optimization
       driverReference.update(
           {'lastActivity': DateTime.now(), 'geoFirePoint': myLocation.data});
     }
@@ -212,9 +235,12 @@ class DriverService {
     logger.info('DRIVER: ===== STARTING DRIVING MODE =====');
     isDriving = true;
 
+    _refreshReferences();
+
     var geoPoint = locationService.getCurrentGeoFirePoint();
     logger.info(
         'DRIVER: Current location: ${geoPoint.latitude}, ${geoPoint.longitude}');
+
     // Clean up any stale requests before starting
     logger.info('DRIVER: Cleaning up old requests...');
     try {
@@ -229,8 +255,9 @@ class DriverService {
       logger.error('DRIVER: Error cleaning requests: $e');
     }
 
-    // Reset request counter
+    // Reset request state
     requestLength = 0;
+    currentRequest = null;
 
     await driverReference.update({
       'lastActivity': DateTime.now(),
@@ -241,7 +268,6 @@ class DriverService {
     logger.info('DRIVER: Updated Firestore document');
     logger.info('DRIVER: Initializing request listener...');
 
-    // if (_isRequestSubListening) return;
     initRequestSub();
     await Future.delayed(const Duration(milliseconds: 1000));
 
@@ -250,7 +276,6 @@ class DriverService {
   }
 
   void initRequestSub() {
-    // If requestSub is not already listening, start listening
     if (requestSub != null) {
       logger.info('DRIVER: Request listener already active');
       return;
@@ -271,7 +296,7 @@ class DriverService {
 
       if (requestLength < requests.length) {
         requestLength = requests.length;
-        // Handle the first request
+
         Request firstRequest = requests.last;
         logger.info('DRIVER: NEW REQUEST RECEIVED!');
         logger.info('  - From: ${firstRequest.name}');
@@ -299,13 +324,11 @@ class DriverService {
     logger.info('DRIVER: ========================================');
     logger.info('DRIVER: Processing request ${req.id}');
 
-    // Cancel any existing timer
     _autoDeclineTimer?.cancel();
 
     currentRequest = req;
     _currentRequestId = req.id;
 
-    // Notify UI that a request has been received
     if (onRequestReceived != null) {
       logger.info('DRIVER: Calling UI callback');
       onRequestReceived!(req);
@@ -313,31 +336,24 @@ class DriverService {
       logger.info('DRIVER: WARNING - No UI callback set!');
     }
 
-    // Calculate timeout duration
     var seconds = (req.timeout.seconds - Timestamp.now().seconds);
     logger.info('DRIVER: Request will auto-decline in $seconds seconds');
     logger.info('DRIVER: ========================================');
 
     if (seconds > 0) {
-      // Set up cancelable timer
       _autoDeclineTimer = Timer(Duration(seconds: seconds), () {
         logger.info('DRIVER: ========================================');
         logger
             .info('DRIVER: Auto-decline timer triggered for request ${req.id}');
 
-        // Check if this request is still current
         if (_currentRequestId == req.id) {
           logger.info('DRIVER: Auto-declining request ${req.id}');
 
-          // Notify UI that request timed out
           if (onRequestTimeout != null) {
             onRequestTimeout!(req.id);
           }
 
-          // Decline the request
           declineRequest(req.id);
-
-          // Clear current request
           _currentRequestId = null;
         } else {
           logger.info(
@@ -365,17 +381,15 @@ class DriverService {
     logger.info('DRIVER: ========================================');
     logger.info('DRIVER: Accepting request $requestID');
 
-    // Cancel auto-decline timer
     if (_autoDeclineTimer != null && _autoDeclineTimer!.isActive) {
       _autoDeclineTimer!.cancel();
       logger.info('DRIVER: ✓ Canceled auto-decline timer');
     }
 
-    // Clear current request ID since we're accepting
     _currentRequestId = null;
 
     DocumentSnapshot requestRef =
-        await _firestore.collection('rides').doc(requestID).get();
+    await _firestore.collection('rides').doc(requestID).get();
 
     if (!requestRef.exists) {
       logger.info('DRIVER: ERROR - Ride document not found!');
@@ -414,7 +428,6 @@ class DriverService {
     logger.info('DRIVER: ========================================');
     logger.info('DRIVER: Declining request $requestID');
 
-    // Cancel auto-decline timer if this is manual decline
     if (_currentRequestId == requestID &&
         _autoDeclineTimer != null &&
         _autoDeclineTimer!.isActive) {
@@ -422,7 +435,6 @@ class DriverService {
       logger.info('DRIVER: ✓ Canceled auto-decline timer (manual decline)');
     }
 
-    // Clear current request
     if (_currentRequestId == requestID) {
       _currentRequestId = null;
     }
@@ -460,36 +472,47 @@ class DriverService {
   }
 
   /*
-   * FIXED: Stop driving - cleanup timers
+   * Stop driving - cleanup timers and subscriptions properly
    */
-  void stopDriving() {
+  Future<void> stopDriving() async {
     logger.info('DRIVER: ========================================');
     logger.info('DRIVER: Stopping driving mode');
 
-    // Cancel any active auto-decline timer
     _autoDeclineTimer?.cancel();
+    _autoDeclineTimer = null;
     _currentRequestId = null;
 
     isDriving = false;
-    driverReference.update({
+
+    await driverReference.update({
       'lastActivity': DateTime.now(),
       'currentRideID': '',
       'isAvailable': false,
     });
 
-    // Clear requests from the driver on Firebase
-    driverReference.collection('requests').get().then((value) {
-      for (var doc in value.docs) {
-        doc.reference.delete();
+    try {
+      final requestsSnapshot = await driverReference.collection('requests').get();
+      for (var doc in requestsSnapshot.docs) {
+        await doc.reference.delete();
       }
-    });
+    } catch (e) {
+      logger.error('DRIVER: Error clearing request docs during stopDriving: $e');
+    }
 
-    // Stop listening for requests
-    requestSub?.cancel();
-    driverSub?.cancel();
-    rideSub?.cancel();
+    await requestSub?.cancel();
+    requestSub = null;
 
-    logger.info('DRIVER: Stopped driving, all timers canceled');
+    await driverSub?.cancel();
+    driverSub = null;
+
+    await rideSub?.cancel();
+    rideSub = null;
+
+    currentRequest = null;
+    requestLength = 0;
+    _isCurrentRideInitialized = false;
+
+    logger.info('DRIVER: Stopped driving, subscriptions cleared');
     logger.info('DRIVER: ========================================');
   }
 
@@ -507,7 +530,6 @@ class DriverService {
         'driverPhotoURL': driver.profilePictureURL
       });
     }
-    // stopDriving();
   }
 
   /*
@@ -520,8 +542,8 @@ class DriverService {
     var rideDriver = rideObj.get('drid');
 
     var driverPastDrives =
-        (await _firestore.collection('users').doc(rideDriver).get())
-            .get('pastDrives');
+    (await _firestore.collection('users').doc(rideDriver).get())
+        .get('pastDrives');
     driverPastDrives.add(driver.currentRideID);
     await _firestore
         .collection('users')
@@ -538,8 +560,8 @@ class DriverService {
     var rideObj = await _firestore.collection('rides').doc(rideID).get();
     var rideRider = rideObj.get('uid');
     var riderPastRides =
-        (await _firestore.collection('users').doc(rideRider).get())
-            .get('pastRides');
+    (await _firestore.collection('users').doc(rideRider).get())
+        .get('pastRides');
     riderPastRides.add(rideID);
     await _firestore
         .collection('users')
@@ -582,12 +604,10 @@ class DriverService {
             updatedRide.uid, driver.currentRideID);
         break;
       case 'IN_PROGRESS':
-        // Payment intent is created on the rider side
         break;
       case 'ENDED':
         completeRide();
         startDriving();
-        // Capture payment from stripe_customer payment that contains the rideID
         Payment.capturePaymentIntentFromFirebaseByUserIdAndRideId(
             updatedRide.uid, driver.currentRideID);
         break;
@@ -611,13 +631,12 @@ class DriverService {
     });
   }
 
-  // TODO: Audit
   Stream<List<Driver>> getNearbyDriversStream() {
     nearbyDriversListStream = geo
         .collection(collectionRef: driversCollection)
         .within(center: myLocation, radius: 50, field: 'geoFirePoint')
         .map((snapshots) =>
-            snapshots.map((e) => Driver.fromDocument(e)).take(10).toList());
+        snapshots.map((e) => Driver.fromDocument(e)).take(10).toList());
     return nearbyDriversListStream;
   }
 
@@ -656,12 +675,12 @@ class DriverService {
     Stream<List<Driver>> stream = geo
         .collection(collectionRef: collectionReference)
         .within(
-            center: centerPoint,
-            radius: radius,
-            field: 'geoFirePoint',
-            strictMode: false)
+        center: centerPoint,
+        radius: radius,
+        field: 'geoFirePoint',
+        strictMode: false)
         .map((event) =>
-            event.map((e) => Driver.fromDocument(e)).take(10).toList());
+        event.map((e) => Driver.fromDocument(e)).take(10).toList());
 
     List<Driver> nearbyDrivers = await stream.first;
     logger.info(
@@ -695,7 +714,6 @@ class DriverService {
       }, SetOptions(merge: true));
       logger.info('DRIVER: Driver document created');
     } else {
-      // Just update location, don't change working status
       logger.info('DRIVER: Updating existing driver location');
       await driversCollection.doc(userService.userID).update({
         'geoFirePoint': locationService.getCurrentGeoFirePoint().data,
@@ -703,7 +721,6 @@ class DriverService {
       });
     }
 
-    // Verify current state
     DocumentSnapshot verifyDoc = await driverReference.get();
     Map<String, dynamic> data = verifyDoc.data() as Map<String, dynamic>;
     logger.info('DRIVER: Current states:');
@@ -717,16 +734,78 @@ class DriverService {
    * @return Future<Map<String, dynamic>> The result of the clock in operation
    */
   Future<Map<String, dynamic>> clockIn() async {
-    HttpsCallableResult result = await driverClockInFunction
-        .call(<String, dynamic>{
-      'daysOfWeek': driver.daysOfWeek,
-      'driveruid': driver.uid,
-      'shiftuid': shiftuid
-    });
-    String response = result.data['response'];
-    bool success = result.data['success'];
+    try {
+      logger.info('DRIVER: clockIn start');
 
-    return {'success': success, 'response': response};
+      final DocumentSnapshot driverDoc = await driverReference.get();
+
+      if (!driverDoc.exists || driverDoc.data() == null) {
+        logger.error('DRIVER: clockIn failed - driver document not found');
+        return {
+          'success': false,
+          'response': 'Driver profile not found.',
+        };
+      }
+
+      final data = driverDoc.data() as Map<String, dynamic>;
+
+      final String driveruid =
+      (data['uid'] ?? auth.FirebaseAuth.instance.currentUser?.uid ?? '')
+          .toString();
+
+      final dynamic rawDays = data['daysOfWeek'];
+
+      List<int> daysOfWeek = [];
+
+      if (rawDays is List) {
+        daysOfWeek = rawDays
+            .map((e) => int.tryParse(e.toString()))
+            .where((e) => e != null)
+            .cast<int>()
+            .toList();
+      } else if (rawDays is String) {
+        daysOfWeek = rawDays
+            .split(',')
+            .map((e) => int.tryParse(e.trim()))
+            .where((e) => e != null)
+            .cast<int>()
+            .toList();
+      }
+
+      logger.info(
+        'DRIVER: clockIn using uid=$driveruid | daysOfWeek=$daysOfWeek | shiftuid=$shiftuid',
+      );
+      logger.info('DRIVER: today weekday check = ${DateTime.now().weekday}');
+
+      if (driveruid.isEmpty) {
+        return {
+          'success': false,
+          'response': 'Driver uid is missing.',
+        };
+      }
+
+      HttpsCallableResult result = await driverClockInFunction.call(
+        <String, dynamic>{
+          'daysOfWeek': daysOfWeek,
+          'driveruid': driveruid,
+          'shiftuid': shiftuid,
+        },
+      );
+
+      logger.info('DRIVER: clockIn raw result = ${result.data}');
+
+      final String response =
+      (result.data['response'] ?? 'No response').toString();
+      final bool success = result.data['success'] == true;
+
+      return {'success': success, 'response': response};
+    } catch (e) {
+      logger.error('DRIVER: clockIn exception: $e');
+      return {
+        'success': false,
+        'response': 'Clock in exception: $e',
+      };
+    }
   }
 
   /*
@@ -734,12 +813,55 @@ class DriverService {
    * @return Future<Map<String, dynamic>> The result of the clock out operation
    */
   Future<Map<String, dynamic>> clockOut() async {
-    HttpsCallableResult result = await driverClockOutFunction
-        .call(<String, dynamic>{'driveruid': driver.uid, 'shiftuid': shiftuid});
-    String response = (result.data['response']).toString();
-    bool success = result.data['success'];
+    try {
+      logger.info('DRIVER: clockOut start');
 
-    return {'success': success, 'response': response};
+      final DocumentSnapshot driverDoc = await driverReference.get();
+
+      if (!driverDoc.exists || driverDoc.data() == null) {
+        logger.error('DRIVER: clockOut failed - driver document not found');
+        return {
+          'success': false,
+          'response': 'Driver profile not found.',
+        };
+      }
+
+      final data = driverDoc.data() as Map<String, dynamic>;
+
+      final String driveruid =
+      (data['uid'] ?? auth.FirebaseAuth.instance.currentUser?.uid ?? '')
+          .toString();
+
+      logger.info('DRIVER: clockOut using uid=$driveruid');
+
+      if (driveruid.isEmpty) {
+        return {
+          'success': false,
+          'response': 'Driver uid is missing.',
+        };
+      }
+
+      HttpsCallableResult result = await driverClockOutFunction.call(
+        <String, dynamic>{
+          'driveruid': driveruid,
+          'shiftuid': shiftuid,
+        },
+      );
+
+      logger.info('DRIVER: clockOut raw result = ${result.data}');
+
+      final String response =
+      (result.data['response'] ?? 'No response').toString();
+      final bool success = result.data['success'] == true;
+
+      return {'success': success, 'response': response};
+    } catch (e) {
+      logger.error('DRIVER: clockOut exception: $e');
+      return {
+        'success': false,
+        'response': 'Clock out exception: $e',
+      };
+    }
   }
 
   /*
@@ -747,12 +869,55 @@ class DriverService {
    * @return Future<Map<String, dynamic>> The result of the start break operation
    */
   Future<Map<String, dynamic>> startBreak() async {
-    HttpsCallableResult result = await driverStartBreakFunction
-        .call(<String, dynamic>{'driveruid': driver.uid, 'shiftuid': shiftuid});
-    String response = (result.data['response']).toString();
-    bool success = result.data['success'];
+    try {
+      logger.info('DRIVER: startBreak start');
 
-    return {'response': response, 'success': success};
+      final DocumentSnapshot driverDoc = await driverReference.get();
+
+      if (!driverDoc.exists || driverDoc.data() == null) {
+        logger.error('DRIVER: startBreak failed - driver document not found');
+        return {
+          'success': false,
+          'response': 'Driver profile not found.',
+        };
+      }
+
+      final data = driverDoc.data() as Map<String, dynamic>;
+
+      final String driveruid =
+      (data['uid'] ?? auth.FirebaseAuth.instance.currentUser?.uid ?? '')
+          .toString();
+
+      logger.info('DRIVER: startBreak using uid=$driveruid shiftuid=$shiftuid');
+
+      if (driveruid.isEmpty) {
+        return {
+          'success': false,
+          'response': 'Driver uid is missing.',
+        };
+      }
+
+      HttpsCallableResult result = await driverStartBreakFunction.call(
+        <String, dynamic>{
+          'driveruid': driveruid,
+          'shiftuid': shiftuid,
+        },
+      );
+
+      logger.info('DRIVER: startBreak raw result = ${result.data}');
+
+      final String response =
+      (result.data['response'] ?? 'No response').toString();
+      final bool success = result.data['success'] == true;
+
+      return {'success': success, 'response': response};
+    } catch (e) {
+      logger.error('DRIVER: startBreak exception: $e');
+      return {
+        'success': false,
+        'response': 'Start break exception: $e',
+      };
+    }
   }
 
   /*

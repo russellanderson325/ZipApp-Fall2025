@@ -219,7 +219,6 @@ class MapWidgetSampleState extends State<MapWidget> {
 
   //driver code
   void clockIn() async {
-    // Prevent the user from spamming the clock in button
     if (DateTime.now().difference(lastClockInButtonPress).inSeconds < 5) {
       if (mounted) {
         MessageOverlay.angryMessage(
@@ -227,118 +226,211 @@ class MapWidgetSampleState extends State<MapWidget> {
       }
       return;
     }
+
     lastClockInButtonPress = DateTime.now();
+
     if (mounted) {
       setState(() {
         driverStates['isLoadingDriverStatus'] = true;
       });
     }
-    // Clock in the driver
-    Map<String, dynamic> response = await driverService.clockIn();
-    // If the response is not successful, show an error message and return
-    if (!response['success']) {
-      if (mounted) MessageOverlay.angryMessage(context, response['response']);
-      return;
-    }
-    // Start driving
-    driverService.startDriving();
-    // Update the UI
-    if (mounted) {
-      setState(() {
-        driverStates['isOnBreak'] = false;
-        driverStates['isWorking'] = true;
-        driverStates['isLoadingDriverStatus'] = false;
-      });
+
+    try {
+      logger.info('MAP: Clock in pressed');
+
+      Map<String, dynamic> response = await driverService.clockIn();
+
+      logger.info('MAP: clockIn response = $response');
+
+      if (!response['success']) {
+        if (mounted) {
+          setState(() {
+            driverStates['isLoadingDriverStatus'] = false;
+          });
+          MessageOverlay.angryMessage(
+            context,
+            response['response']?.toString() ?? 'Clock in failed.',
+          );
+        }
+        return;
+      }
+
+      driverService.startDriving();
+
+      if (mounted) {
+        setState(() {
+          driverStates['isOnBreak'] = false;
+          driverStates['isWorking'] = true;
+          driverStates['isLoadingDriverStatus'] = false;
+        });
+      }
+    } catch (e) {
+      logger.error('MAP: clockIn exception: $e');
+
+      if (mounted) {
+        setState(() {
+          driverStates['isLoadingDriverStatus'] = false;
+        });
+        MessageOverlay.angryMessage(
+          context,
+          'Clock in failed: $e',
+        );
+      }
     }
   }
 
   void clockOut() async {
-    if (DateTime.now().difference(lastClockOutButtonPress).inSeconds < 5) {
-      if (mounted) {
-        MessageOverlay.angryMessage(
-            context, "Please wait a few seconds before trying again.");
-      }
-      return;
-    }
-    lastClockOutButtonPress = DateTime.now();
     if (mounted) {
       setState(() {
         driverStates['isLoadingDriverStatus'] = true;
       });
     }
-    var response = await driverService.clockOut();
-    if (!response['success']) {
-      if (mounted) MessageOverlay.angryMessage(context, response['response']);
-      return;
-    }
-    driverService.stopDriving();
-    if (mounted) {
-      setState(() {
-        driverStates['isOnBreak'] = false;
-        driverStates['isWorking'] = false;
-        driverStates['isLoadingDriverStatus'] = false;
-      });
+
+    try {
+      logger.info('MAP: Clock out pressed');
+
+      Map<String, dynamic> response = await driverService.clockOut();
+
+      logger.info('MAP: clockOut response = $response');
+
+      if (!response['success']) {
+        if (mounted) {
+          setState(() {
+            driverStates['isLoadingDriverStatus'] = false;
+          });
+
+          MessageOverlay.angryMessage(
+            context,
+            response['response']?.toString() ?? 'Clock out failed.',
+          );
+        }
+        return;
+      }
+
+      driverService.stopDriving();
+
+      if (mounted) {
+        setState(() {
+          driverStates['isWorking'] = false;
+          driverStates['isOnBreak'] = false;
+          driverStates['isLoadingDriverStatus'] = false;
+        });
+      }
+    } catch (e) {
+      logger.error('MAP: clockOut exception: $e');
+
+      if (mounted) {
+        setState(() {
+          driverStates['isLoadingDriverStatus'] = false;
+        });
+
+        MessageOverlay.angryMessage(
+          context,
+          'Clock out failed: $e',
+        );
+      }
     }
   }
 
   void startBreak() async {
-    if (DateTime.now().difference(lastStartBreakButtonPress).inSeconds < 5) {
-      if (mounted) {
-        MessageOverlay.angryMessage(
-            context, "Please wait a few seconds before trying again.");
-      }
-      return;
-    }
-    lastStartBreakButtonPress = DateTime.now();
     if (mounted) {
       setState(() {
         driverStates['isLoadingDriverStatus'] = true;
       });
     }
-    var response = await driverService.startBreak();
-    if (!response['success']) {
-      if (mounted) MessageOverlay.angryMessage(context, response['response']);
-      return;
-    }
-    driverService.stopDriving();
-    if (mounted) {
-      setState(() {
-        driverStates['isOnBreak'] = true;
-        driverStates['isWorking'] = true;
-        driverStates['isLoadingDriverStatus'] = false;
-      });
+
+    try {
+      logger.info('MAP: Start break pressed');
+
+      Map<String, dynamic> response = await driverService.startBreak();
+
+      logger.info('MAP: startBreak response = $response');
+
+      if (!response['success']) {
+        if (mounted) {
+          setState(() {
+            driverStates['isLoadingDriverStatus'] = false;
+          });
+
+          MessageOverlay.angryMessage(
+            context,
+            response['response']?.toString() ?? 'Start break failed.',
+          );
+        }
+        return;
+      }
+
+      if (mounted) {
+        setState(() {
+          driverStates['isOnBreak'] = true;
+          driverStates['isWorking'] = false;
+          driverStates['isLoadingDriverStatus'] = false;
+        });
+      }
+    } catch (e) {
+      logger.error('MAP: startBreak exception: $e');
+
+      if (mounted) {
+        setState(() {
+          driverStates['isLoadingDriverStatus'] = false;
+        });
+
+        MessageOverlay.angryMessage(
+          context,
+          'Start break failed: $e',
+        );
+      }
     }
   }
 
   void endBreak() async {
-    if (DateTime.now().difference(lastEndBreakButtonPress).inSeconds < 5) {
-      if (mounted) {
-        MessageOverlay.angryMessage(
-            context, "Please wait a few seconds before trying again.");
-      }
-      return;
-    }
-    lastEndBreakButtonPress = DateTime.now();
-
     if (mounted) {
       setState(() {
         driverStates['isLoadingDriverStatus'] = true;
       });
     }
 
-    var response = await driverService.endBreak();
-    if (!response['success']) {
-      if (mounted) MessageOverlay.angryMessage(context, response['response']);
-      return;
-    }
+    try {
+      logger.info('MAP: End break pressed');
 
-    driverService.startDriving();
-    if (mounted) {
-      setState(() {
-        driverStates['isOnBreak'] = false;
-        driverStates['isWorking'] = true;
-        driverStates['isLoadingDriverStatus'] = false;
-      });
+      Map<String, dynamic> response = await driverService.endBreak();
+
+      logger.info('MAP: endBreak response = $response');
+
+      if (!response['success']) {
+        if (mounted) {
+          setState(() {
+            driverStates['isLoadingDriverStatus'] = false;
+          });
+
+          MessageOverlay.angryMessage(
+            context,
+            response['response']?.toString() ?? 'Resume driving failed.',
+          );
+        }
+        return;
+      }
+
+      if (mounted) {
+        setState(() {
+          driverStates['isOnBreak'] = false;
+          driverStates['isWorking'] = true;
+          driverStates['isLoadingDriverStatus'] = false;
+        });
+      }
+    } catch (e) {
+      logger.error('MAP: endBreak exception: $e');
+
+      if (mounted) {
+        setState(() {
+          driverStates['isLoadingDriverStatus'] = false;
+        });
+
+        MessageOverlay.angryMessage(
+          context,
+          'Resume driving failed: $e',
+        );
+      }
     }
   }
 
@@ -417,12 +509,10 @@ class MapWidgetSampleState extends State<MapWidget> {
                             WidgetStateProperty.all(const EdgeInsets.all(0)),
                         iconColor: WidgetStateProperty.all(Colors.black),
                         iconSize: WidgetStateProperty.all(16),
-                        foregroundColor:
-                            WidgetStateProperty.all(Colors.black),
+                        foregroundColor: WidgetStateProperty.all(Colors.black),
                         backgroundColor:
                             WidgetStateProperty.all(ZipColors.zipYellow),
-                        textStyle:
-                            WidgetStateProperty.all(ZipDesign.labelText),
+                        textStyle: WidgetStateProperty.all(ZipDesign.labelText),
                       ),
                     ),
                   ),
@@ -439,12 +529,10 @@ class MapWidgetSampleState extends State<MapWidget> {
                             WidgetStateProperty.all(const EdgeInsets.all(0)),
                         iconColor: WidgetStateProperty.all(Colors.black),
                         iconSize: WidgetStateProperty.all(16),
-                        foregroundColor:
-                            WidgetStateProperty.all(Colors.black),
+                        foregroundColor: WidgetStateProperty.all(Colors.black),
                         backgroundColor:
                             WidgetStateProperty.all(ZipColors.zipYellow),
-                        textStyle:
-                            WidgetStateProperty.all(ZipDesign.labelText),
+                        textStyle: WidgetStateProperty.all(ZipDesign.labelText),
                       ),
                     ),
                   ),
@@ -461,8 +549,7 @@ class MapWidgetSampleState extends State<MapWidget> {
                   iconColor: WidgetStateProperty.all(Colors.black),
                   iconSize: WidgetStateProperty.all(16),
                   foregroundColor: WidgetStateProperty.all(Colors.black),
-                  backgroundColor:
-                      WidgetStateProperty.all(ZipColors.zipYellow),
+                  backgroundColor: WidgetStateProperty.all(ZipColors.zipYellow),
                   textStyle: WidgetStateProperty.all(ZipDesign.labelText),
                 ),
               ),
@@ -586,7 +673,8 @@ class MapWidgetSampleState extends State<MapWidget> {
               );
             } else {
               // Handle the case where distanceValue is null, perhaps notify the user or log an error
-              logger.error("Error: PolylineResult returned null for distanceValue.");
+              logger.error(
+                  "Error: PolylineResult returned null for distanceValue.");
             }
           }
         } else {
@@ -671,7 +759,7 @@ class MapWidgetSampleState extends State<MapWidget> {
 
       PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
         request: polylineRequest,
-        //googleApiKey: Keys.map,
+        // googleApiKey: Keys.map,
       );
 
       if (result.points.isNotEmpty) {

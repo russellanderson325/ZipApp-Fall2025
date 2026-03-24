@@ -56,25 +56,35 @@ class Driver {
 
   factory Driver.fromJson(Map<String, dynamic> doc) {
     Driver driver = Driver(
-      uid: doc['uid'] as String,
-      firstName: doc['firstName'] as String,
-      lastName: doc['lastName'] as String,
-      cartModel: doc['cartModel'] ?? "X",
+      uid: doc['uid']?.toString().trim() ?? "",
+      firstName: doc['firstName']?.toString() ?? "",
+      lastName: doc['lastName']?.toString() ?? "",
+      cartModel: doc['cartModel']?.toString() ?? "X",
       lastActivity: convertStamp(doc['lastActivity'] as Timestamp),
-      profilePictureURL: doc['profilePictureURL'] as String,
-      geoFirePoint: extractGeoFirePoint(doc['geoFirePoint']),
-      fcmToken: doc['fcmToken'] ?? "",
+      profilePictureURL: doc['profilePictureURL']?.toString() ?? "",
+      geoFirePoint: doc['geoFirePoint'] != null
+          ? extractGeoFirePoint(Map<String, dynamic>.from(doc['geoFirePoint']))
+          : null,
+      fcmToken: doc['fcmToken']?.toString() ?? "",
       isWorking: doc['isWorking'] ?? false,
       isAvailable: doc['isAvailable'] ?? false,
-      isOnBreak: doc['isOnBreak'] as bool,
-      currentRideID: doc['currentRideID'] ?? "",
-      daysOfWeek: List<int>.from(doc['daysOfWeek'] as List), 
+      isOnBreak: doc['isOnBreak'] ?? false,
+      currentRideID: doc['currentRideID']?.toString() ?? "",
+      daysOfWeek: (doc['daysOfWeek'] as List<dynamic>? ?? [])
+          .map((e) => e is int ? e : int.tryParse(e.toString()) ?? 0)
+          .toList(),
     );
     return driver;
   }
 
   factory Driver.fromDocument(DocumentSnapshot doc) {
-    return Driver.fromJson(doc.data() as Map<String, dynamic>);
+    final data = Map<String, dynamic>.from(doc.data() as Map<String, dynamic>);
+
+    if ((data['uid'] == null) || (data['uid'].toString().trim().isEmpty)) {
+      data['uid'] = doc.id;
+    }
+
+    return Driver.fromJson(data);
   }
 
   static GeoFirePoint extractGeoFirePoint(Map<String, dynamic> pointMap) {

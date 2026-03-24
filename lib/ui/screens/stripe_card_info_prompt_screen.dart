@@ -4,21 +4,24 @@ import 'package:zipapp/services/payment.dart';
 import 'package:zipapp/constants/zip_colors.dart';
 import 'package:zipapp/logger.dart';
 
-
 class StripeCardInfoPromptScreen extends StatefulWidget {
   final Function refreshKey;
 
   const StripeCardInfoPromptScreen({super.key, required this.refreshKey});
 
   @override
-  StripeCardInfoPromptScreenState createState() => StripeCardInfoPromptScreenState();
+  StripeCardInfoPromptScreenState createState() =>
+      StripeCardInfoPromptScreenState();
 }
 
-class StripeCardInfoPromptScreenState extends State<StripeCardInfoPromptScreen> {
+class StripeCardInfoPromptScreenState
+    extends State<StripeCardInfoPromptScreen> {
   String statusMessage = " ";
   static DateTime lastButtonPress = DateTime(0);
   static bool stripeButtonPressed = false;
   final AppLogger logger = AppLogger();
+
+  CardFieldInputDetails? _card;
 
   @override
   Widget build(BuildContext context) {
@@ -35,72 +38,91 @@ class StripeCardInfoPromptScreenState extends State<StripeCardInfoPromptScreen> 
             const SizedBox(height: 200),
             Column(
               children: [
-                const CardField(
-                  cursorColor: Color.fromARGB(255, 54, 54, 54),
-                  decoration: InputDecoration(
+                CardField(
+                  cursorColor: const Color.fromARGB(255, 54, 54, 54),
+                  decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: 'Card Information',
                   ),
-                  // Enabling more fields
-                  enablePostalCode: true,  // Enable if you need to collect postal code
+                  enablePostalCode: true,
+                  onCardChanged: (card) {
+                    setState(() {
+                      _card = card;
+                      if (statusMessage == "Please enter valid card information.") {
+                        statusMessage = " ";
+                      }
+                    });
+                  },
                 ),
                 const SizedBox(height: 30),
                 Visibility(
-                  child: (statusMessage != "loading" ? Text(
-                    statusMessage,
-                    style: const TextStyle(color: Colors.red),
-                  ) : 
-                  const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        color: Colors.black,
-                      ),
-                    )
-                  ),
+                  child: (statusMessage != "loading"
+                      ? Text(
+                          statusMessage,
+                          style: const TextStyle(color: Colors.red),
+                        )
+                      : const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            color: Colors.black,
+                          ),
+                        )),
                 ),
-                // const SizedBox(height: 10),
               ],
             ),
             const SizedBox(height: 30),
             InkWell(
               borderRadius: BorderRadius.circular(10),
               onTap: () {
-                // If button has been pressed in the last 1 second, do nothing
-                if (DateTime.now().difference(lastButtonPress).inSeconds < 3) return;
+                if (DateTime.now().difference(lastButtonPress).inSeconds < 3) {
+                  return;
+                }
                 lastButtonPress = DateTime.now();
 
                 setState(() {
                   statusMessage = "loading";
                 });
 
-                // Attempt to create the payment method using Stripe
-                Payment.createPaymentMethod().then((paymentMethod) async {
-                  // Get the payment method with the fingerprint
-                  Map<String, dynamic>? paymentMethodWithFingerprint = await Payment.getPaymentMethodById(paymentMethod!.id);
-                  logger.info("Payment Method: $paymentMethodWithFingerprint");
-                  // Get the fingerprint
-                  String fingerprint = paymentMethodWithFingerprint!['fingerprint'];
+                if (_card?.complete != true) {
+                  setState(() {
+                    statusMessage = "Please enter valid card information.";
+                  });
+                  return;
+                }
 
-                  // Save the payment method to the Firestore database
-                  // Note: If the finger print already exists in the users payment methods, it will not be added
-                  // and the payment method will be removed from the Stripe API
+                Payment.createPaymentMethod().then((paymentMethod) async {
+                  Map<String, dynamic>? paymentMethodWithFingerprint =
+                      await Payment.getPaymentMethodById(paymentMethod!.id);
+                  logger.info("Payment Method: $paymentMethodWithFingerprint");
+
+                  String fingerprint =
+                      paymentMethodWithFingerprint!['fingerprint'];
+
                   logger.info("Fingerprint: $fingerprint");
-                  await Payment.setPaymentMethodIdAndFingerprint(paymentMethod.id, fingerprint);
-                  
+
+                  await Payment.setPaymentMethodIdAndFingerprint(
+                      paymentMethod.id, fingerprint);
+
                   if (!mounted) return;
-                  
+
                   Navigator.pop(context);
                   widget.refreshKey();
                 }).catchError((e) {
                   logger.error(e.toString());
-                  
+
                   if (!mounted) return;
-                  
+
                   switch (e.toString()) {
                     case "Exception: Payment method already exists":
                       setState(() {
                         statusMessage = "Payment method already exists.";
+                      });
+                      break;
+                    case "Exception: Stripe customer not ready. Please log out and log back in.":
+                      setState(() {
+                        statusMessage =
+                            "Stripe customer not ready. Please log out and log back in.";
                       });
                       break;
                     default:
@@ -111,16 +133,15 @@ class StripeCardInfoPromptScreenState extends State<StripeCardInfoPromptScreen> 
                   }
                 });
               },
-              // icon: Image.asset('assets/connectstripe_blurple_4x.png'),
               child: Ink(
-                height: 60, // Set the height of your image button
-                width: double.infinity, // Set the width of your image button
+                height: 60,
+                width: double.infinity,
                 decoration: BoxDecoration(
                   image: const DecorationImage(
-                    image: AssetImage("assets/connectstripe_blurple_4x.png"), // Path to your image asset
+                    image: AssetImage("assets/connectstripe_blurple_4x.png"),
                     fit: BoxFit.cover,
                   ),
-                  borderRadius: BorderRadius.circular(10), // Optional: if you want rounded corners for the image
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
             ),

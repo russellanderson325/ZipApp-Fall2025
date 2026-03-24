@@ -19,10 +19,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zipapp/models/primary_payment_method.dart';
 import 'package:zipapp/logger.dart';
 
-
 class Payment {
   static final AppLogger logger = AppLogger();
-  static final _firebaseUser = auth.FirebaseAuth.instance.currentUser;
+  static auth.User? get _firebaseUser => auth.FirebaseAuth.instance.currentUser;
   static final FirebaseFunctions functions = FirebaseFunctions.instance;
   static PrimaryPaymentMethod primaryPaymentMethodStatic = PrimaryPaymentMethod(
     applePay: false,
@@ -343,12 +342,18 @@ class Payment {
    * @return Future<String> - a future that resolves to the payment intent
    */
   static Future<Map<String, dynamic>> createPaymentIntent(
-      int amount, String currency) async {
+    int amount,
+    String currency, {
+    String? paymentMethodId,
+    String? customerId,
+  }) async {
     try {
       final HttpsCallableResult result =
           await createPaymentIntentCallable.call({
         'amount': amount,
         'currency': currency,
+        'paymentMethodId': paymentMethodId,
+        'customerId': customerId,
       });
       return {
         'success': result.data['success'],
@@ -357,6 +362,17 @@ class Payment {
     } catch (error) {
       return {'success': false, 'response': error};
     }
+  }
+
+  static Future<String?> getStripeCustomerId() async {
+    if (_firebaseUser == null) return null;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('stripe_customers')
+        .doc(_firebaseUser!.uid)
+        .get();
+
+    return doc.data()?['customer_id'];
   }
 
   /*
@@ -470,6 +486,8 @@ class Payment {
 
     var documentSnapshot = await stripeCustomer.get();
     var customerId = documentSnapshot.data()?['customer_id'];
+
+    logger.info('UID: ${_firebaseUser?.uid} | customerId: $customerId');
 
     // Attach the payment method to the customer in the Stripe API
     HttpsCallableResult<dynamic> response =
@@ -601,17 +619,27 @@ class Payment {
   */
   static Future<Map<String, dynamic>?> getPaymentMethodById(
       String paymentMethodId) async {
-    final results = await getPaymentMethodDetailsCallable
-        .call({'paymentMethodId': paymentMethodId});
+    try {
+      final results = await getPaymentMethodDetailsCallable
+          .call({'paymentMethodId': paymentMethodId});
 
-    if (!results.data['success']) {
-      throw Exception('Error getting payment method details');
+      if (!results.data['success']) {
+        logger.error('getPaymentMethodById failed: ${results.data}');
+        return null;
+      }
+
+      Map<String, dynamic> response =
+          Map<String, dynamic>.from(results.data['response']);
+      response['id'] = paymentMethodId;
+      return response;
+    } on FirebaseFunctionsException catch (e) {
+      logger.error(
+          'getPaymentMethodById error: ${e.message} | details: ${e.details}');
+      return null;
+    } catch (e) {
+      logger.error('getPaymentMethodById unexpected error: $e');
+      return null;
     }
-
-    Map<String, dynamic> response =
-        Map<String, dynamic>.from(results.data['response']);
-    response['id'] = paymentMethodId;
-    return response;
   }
 
   /*

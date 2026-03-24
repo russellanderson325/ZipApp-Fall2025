@@ -14,9 +14,11 @@ const driverClockOut = require("./driver/driverClockOut");
 const driverClockIn = require("./driver/driverClockIn");
 const driverStartBreak = require("./driver/driverStartBreak");
 const driverEndBreak = require("./driver/driverEndBreak");
-const {emailHelpCenter} = require("./emailHelpCenter");
-const createDriverAccount = require("./stripe_functions/DriverBankAccountOnboarding"); 
-const createPayout= require("./stripe_functions/createPayout"); 
+const { emailHelpCenter } = require("./emailHelpCenter");
+const createDriverAccount = require("./stripe_functions/DriverBankAccountOnboarding");
+const createPayout = require("./stripe_functions/createPayout");
+const createStripeCustomer = require("./stripe_functions/createStripeCustomer");
+const createStripeCustomerCallable = require("./stripe_functions/createStripeCustomerCallable");
 
 // Export the functions
 exports.getPaymentMethodDetails = getPaymentMethodDetails;
@@ -30,6 +32,7 @@ exports.driverStartBreak = driverStartBreak;
 exports.driverEndBreak = driverEndBreak;
 exports.cancelPaymentIntent = cancelPaymentIntent;
 exports.emailHelpCenter = emailHelpCenter;
-exports.createDriverAccount = createDriverAccount; 
-exports.createPayout = createPayout; 
-
+exports.createDriverAccount = createDriverAccount;
+exports.createPayout = createPayout;
+exports.createStripeCustomerCallable = createStripeCustomerCallable.createStripeCustomerCallable;
+exports.createStripeCustomer = createStripeCustomer;
