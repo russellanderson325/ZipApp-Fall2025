@@ -17,6 +17,7 @@ const driverEndBreak = require("./driver/driverEndBreak");
 const {emailHelpCenter} = require("./emailHelpCenter");
 const createDriverAccount = require("./stripe_functions/DriverBankAccountOnboarding"); 
 const createPayout= require("./stripe_functions/createPayout"); 
+const createStripeCustomer = require("./stripe_functions/createStripeCustomer");
 
 // Export the functions
 exports.getPaymentMethodDetails = getPaymentMethodDetails;
@@ -32,4 +33,5 @@ exports.cancelPaymentIntent = cancelPaymentIntent;
 exports.emailHelpCenter = emailHelpCenter;
 exports.createDriverAccount = createDriverAccount; 
 exports.createPayout = createPayout; 
+exports.createStripeCustomer = createStripeCustomer;
 

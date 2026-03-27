@@ -9,8 +9,7 @@ import 'package:zipapp/logger.dart';
 enum AuthProblems { userNotFound, passwordNotValid, networkError, unknownError }
 
 class AuthService {
-  //final GoogleSignIn _googleSignIn = GoogleSignIn();
-  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
   final auth.FirebaseAuth _auth = auth.FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   // FirebaseFirestore firestore = FirebaseFirestore.instance;
@@ -20,16 +19,13 @@ class AuthService {
 
   Future<auth.User?> googleSignIn() async {
     try {
-      GoogleSignInAccount? googleSignInAccount = await _googleSignIn.authenticate(scopeHint: ['email']);
+      GoogleSignInAccount? googleSignInAccount = await _googleSignIn.signIn();
       GoogleSignInAuthentication googleAuth =
-          googleSignInAccount.authentication;
-
-      final authClient = _googleSignIn.authorizationClient;
-      final authorization = await authClient.authorizationForScopes(['email']);
+          await googleSignInAccount!.authentication;
 
       final auth.OAuthCredential credential =
           auth.GoogleAuthProvider.credential(
-        accessToken: authorization?.accessToken,
+        accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
       auth.User? user = (await _auth.signInWithCredential(credential)).user;

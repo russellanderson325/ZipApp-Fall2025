@@ -451,17 +451,11 @@ class _DriverPortalState extends State<DriverPortal> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 2.0),
         child: DottedBorder(
-          options: const RoundedRectDottedBorderOptions(
-            radius: Radius.circular(8.0),
-            dashPattern: [10, 10],
-            strokeWidth: 1.0,
-            color: TailwindColors.gray300,
-          ),
-          //borderType: BorderType.RoundedRect,
-          //radius: const Radius.circular(8.0),
-          //dashPattern: const [10, 10],
-          //color: TailwindColors.gray300,
-         // strokeWidth: 1.0,
+          borderType: BorderType.RRect,
+          radius: const Radius.circular(8.0),
+          dashPattern: const [10, 10],
+          color: TailwindColors.gray300,
+          strokeWidth: 1.0,
           child: frontImageAdded
               ? const Placeholder()
               : Center(
@@ -488,17 +482,11 @@ class _DriverPortalState extends State<DriverPortal> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 2.0),
         child: DottedBorder(
-          options: const RoundedRectDottedBorderOptions(
-            radius: Radius.circular(8.0),
-            dashPattern: [10, 10],
-            strokeWidth: 1.0,
-            color: TailwindColors.gray300,
-          ),
-          //borderType: BorderType.RRect,
-          //radius: const Radius.circular(8.0),
-          //dashPattern: const [10, 10],
-          //color: TailwindColors.gray300,
-          //strokeWidth: 1.0,
+          borderType: BorderType.RRect,
+          radius: const Radius.circular(8.0),
+          dashPattern: const [10, 10],
+          color: TailwindColors.gray300,
+          strokeWidth: 1.0,
           child: rearImageAdded
               ? const Placeholder()
               : Center(

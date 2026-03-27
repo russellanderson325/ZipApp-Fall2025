@@ -40,7 +40,7 @@ class MapWidgetSampleState extends State<MapWidget> {
   LatLng? userLatLng, searchLatLng;
   final markers = <Marker>[];
   final polylines = <Polyline>[];
-  PolylinePoints polylinePoints = PolylinePoints(apiKey: Keys.map);
+  PolylinePoints polylinePoints = PolylinePoints();
   DriverService driverService = DriverService();
   Map<String, bool> driverStates = {
     'isWorking': false,
@@ -671,7 +671,7 @@ class MapWidgetSampleState extends State<MapWidget> {
 
       PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
         request: polylineRequest,
-        //googleApiKey: Keys.map,
+        googleApiKey: Keys.map,
       );
 
       if (result.points.isNotEmpty) {
