@@ -55,26 +55,35 @@ class Driver {
   }
 
   factory Driver.fromJson(Map<String, dynamic> doc) {
+    final Timestamp? lastActivityStamp = doc['lastActivity'] as Timestamp?;
+    final Map<String, dynamic>? geoPointMap =
+        doc['geoFirePoint'] as Map<String, dynamic>?;
+
     Driver driver = Driver(
-      uid: doc['uid'] as String,
-      firstName: doc['firstName'] as String,
-      lastName: doc['lastName'] as String,
-      cartModel: doc['cartModel'] ?? "X",
-      lastActivity: convertStamp(doc['lastActivity'] as Timestamp),
-      profilePictureURL: doc['profilePictureURL'] as String,
-      geoFirePoint: extractGeoFirePoint(doc['geoFirePoint']),
-      fcmToken: doc['fcmToken'] ?? "",
-      isWorking: doc['isWorking'] ?? false,
-      isAvailable: doc['isAvailable'] ?? false,
-      isOnBreak: doc['isOnBreak'] as bool,
-      currentRideID: doc['currentRideID'] ?? "",
-      daysOfWeek: List<int>.from(doc['daysOfWeek'] as List), 
+      uid: (doc['uid'] as String?) ?? '',
+      firstName: (doc['firstName'] as String?) ?? '',
+      lastName: (doc['lastName'] as String?) ?? '',
+      cartModel: (doc['cartModel'] as String?) ?? 'X',
+      lastActivity: lastActivityStamp != null
+          ? convertStamp(lastActivityStamp)
+          : DateTime.fromMillisecondsSinceEpoch(0),
+      profilePictureURL: (doc['profilePictureURL'] as String?) ?? '',
+      geoFirePoint:
+          geoPointMap != null ? extractGeoFirePoint(geoPointMap) : null,
+      fcmToken: (doc['fcmToken'] as String?) ?? '',
+      isWorking: doc['isWorking'] as bool? ?? false,
+      isAvailable: doc['isAvailable'] as bool? ?? false,
+      isOnBreak: doc['isOnBreak'] as bool? ?? false,
+      currentRideID: (doc['currentRideID'] as String?) ?? '',
+      daysOfWeek: List<int>.from((doc['daysOfWeek'] as List?) ?? const []),
     );
     return driver;
   }
 
   factory Driver.fromDocument(DocumentSnapshot doc) {
-    return Driver.fromJson(doc.data() as Map<String, dynamic>);
+    final data = (doc.data() as Map<String, dynamic>?) ?? <String, dynamic>{};
+    data.putIfAbsent('uid', () => doc.id);
+    return Driver.fromJson(data);
   }
 
   static GeoFirePoint extractGeoFirePoint(Map<String, dynamic> pointMap) {
