@@ -5,10 +5,15 @@ allprojects {
     }
 }
 
+val buildDirOverride = System.getenv("ZIPAPP_ANDROID_BUILD_DIR")
 val newBuildDir: Directory =
-    rootProject.layout.buildDirectory
-        .dir("../../build")
-        .get()
+    if (buildDirOverride != null) {
+        layout.dir(providers.provider { file(buildDirOverride) }).get()
+    } else {
+        rootProject.layout.buildDirectory
+            .dir("../../build")
+            .get()
+    }
 rootProject.layout.buildDirectory.value(newBuildDir)
 
 subprojects {
