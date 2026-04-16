@@ -691,7 +691,7 @@ class DriverService {
         'isOnBreak': false,
         'currentRideID': '',
         'fcmToken': '',
-        'daysOfWeek': [],
+        'daysOfWeek': [0, 1, 2, 3, 4, 5, 6],
       }, SetOptions(merge: true));
       logger.info('DRIVER: Driver document created');
     } else {
