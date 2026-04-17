@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_place_plus/google_place_plus.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -10,7 +11,6 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:zipapp/business/drivers.dart';
 import 'package:zipapp/business/ride.dart';
 import 'package:zipapp/business/user.dart';
-import 'package:zipapp/constants/keys.dart';
 import 'package:zipapp/constants/zip_colors.dart';
 import 'package:zipapp/constants/zip_design.dart';
 import 'package:zipapp/models/user.dart';
@@ -40,7 +40,7 @@ class MapWidgetSampleState extends State<MapWidget> {
   LatLng? userLatLng, searchLatLng;
   final markers = <Marker>[];
   final polylines = <Polyline>[];
-  PolylinePoints polylinePoints = PolylinePoints(apiKey: Keys.map);
+  PolylinePoints polylinePoints = PolylinePoints(apiKey: dotenv.env['GOOGLE_MAPS_KEY']!);
   DriverService driverService = DriverService();
   Map<String, bool> driverStates = {
     'isWorking': false,
@@ -593,7 +593,7 @@ class MapWidgetSampleState extends State<MapWidget> {
   }
 
   void addSearchedMarker(LocalSearchResult searchResult) async {
-    GooglePlace googlePlace = GooglePlace(Keys.map);
+    GooglePlace googlePlace = GooglePlace(dotenv.env['GOOGLE_MAPS_KEY']!);
     await googlePlace.details.get(searchResult.placeId).then(
       (value) async {
         if (value != null &&

@@ -10,12 +10,13 @@ import 'package:firebase_core/firebase_core.dart';
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Stripe.publishableKey =
-      'pk_test_Cn8XIP0a25tKPaf80s04Lo1m00dQhI8R0u'; // For Stripe
+  await dotenv.load(fileName: 'assets/.env');
+  //Stripe.publishableKey = 'pk_test_Cn8XIP0a25tKPaf80s04Lo1m00dQhI8R0u'; // For Stripe
+  Stripe.publishableKey = dotenv.env['STRIPE_PUB_KEY']!;
   Stripe.merchantIdentifier = 'merchant.com.zipgameday.zip'; // For Apple Pay
   await Stripe.instance.applySettings();
 
-  await dotenv.load(fileName: 'assets/.env');
+  //await dotenv.load(fileName: 'assets/.env');
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );

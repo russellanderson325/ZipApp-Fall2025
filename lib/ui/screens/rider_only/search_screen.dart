@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_place_plus/google_place_plus.dart';
 
-import 'package:zipapp/constants/keys.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:zipapp/constants/zip_colors.dart';
 import 'package:zipapp/services/position_service.dart';
 
@@ -15,14 +15,14 @@ class SearchScreen extends StatefulWidget {
 
 class SearchScreenState extends State<SearchScreen> {
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey();
-  final String mapAPIKey = Keys.map;
+  final String mapAPIKey = dotenv.env['GOOGLE_MAPS_KEY']!;
 
   final TextEditingController searchController = TextEditingController();
   final int radius = 120;
 
   final PositionService positionService = PositionService();
 
-  final GooglePlace _googlePlace = GooglePlace(Keys.map);
+  final GooglePlace _googlePlace = GooglePlace(dotenv.env['GOOGLE_MAPS_KEY']!);
 
   late FocusNode _focusNode;
 
