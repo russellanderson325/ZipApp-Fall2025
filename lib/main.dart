@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:zipapp/constants/keys.dart';
 import 'package:zipapp/firebase_options.dart';
 import 'package:zipapp/ui/screens/root_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -10,8 +11,7 @@ import 'package:firebase_core/firebase_core.dart';
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Stripe.publishableKey =
-      'pk_test_Cn8XIP0a25tKPaf80s04Lo1m00dQhI8R0u'; // For Stripe
+  Stripe.publishableKey = StripeKeys.publishable;
   Stripe.merchantIdentifier = 'merchant.com.zipgameday.zip'; // For Apple Pay
   await Stripe.instance.applySettings();
 

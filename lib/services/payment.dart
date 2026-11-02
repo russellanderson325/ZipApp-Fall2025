@@ -14,7 +14,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zipapp/models/primary_payment_method.dart';
 import 'package:zipapp/logger.dart';
@@ -364,13 +363,7 @@ class Payment {
    */
   static Future<Map<String, bool>> confirmPayment(String clientSecret) async {
     try {
-      // These are "okay" to be in the code because they are public keys,
-      // but they should be stored in a more secure location like .env
-      if (kDebugMode) {
-        Stripe.publishableKey = "pk_test_Cn8XIP0a25tKPaf80s04Lo1m00dQhI8R0u";
-      } else {
-        Stripe.publishableKey = "pk_live_2bHAGSfue3vfL7ZKKBUisTjT001a503e1U";
-      }
+      // Stripe.publishableKey is already set once at app startup (see main.dart).
       // Prepare payment method details
       PaymentIntent _ = await Stripe.instance.confirmPayment(
         paymentIntentClientSecret: clientSecret,
