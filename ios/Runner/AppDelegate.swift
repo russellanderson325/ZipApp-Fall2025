@@ -10,8 +10,11 @@ import GoogleMaps
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
 
-    // TODO: Figure out how to get this from the environment or using a secret manager
-    GMSServices.provideAPIKey("AIzaSyD9DKNhJbRu_uX3QeBcwj9DS0jxUkbSIUY") 
+    // Injected at build time via ios/Flutter/Secrets.xcconfig -> Info.plist (GMSApiKey).
+    if let mapsApiKey = Bundle.main.object(forInfoDictionaryKey: "GMSApiKey") as? String,
+       !mapsApiKey.isEmpty {
+      GMSServices.provideAPIKey(mapsApiKey)
+    }
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }

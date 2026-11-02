@@ -12,3 +12,6 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# API keys — see secrets.properties.example for local setup
+secrets.properties

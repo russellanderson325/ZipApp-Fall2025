@@ -44,5 +44,8 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Files containing API keys
-**/ios/Runner/AppDelegate.swift
+# Files containing API keys — see .env.example / android/secrets.properties.example /
+# ios/Flutter/Secrets.xcconfig.example for local setup.
+.env
+android/secrets.properties
+ios/Flutter/Secrets.xcconfig
